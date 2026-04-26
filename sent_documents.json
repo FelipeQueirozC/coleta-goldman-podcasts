@@ -1,0 +1,201 @@
+{
+  "sent": {
+    "exchanges": {
+      "affordability-consumer-concerns-and-government-proposals": {
+        "date_iso": "",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:14:49.719967+00:00",
+        "title": "\u2018Affordability\u2019: Consumer Concerns and Government Proposals"
+      },
+      "ai-exchanges-power-problems": {
+        "date_iso": "2026-03-03",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:14:58.164479+00:00",
+        "title": "AI Exchanges: Power Problems?"
+      },
+      "apollos-jim-zelter-on-ai-disruption-and-the-future-of-private-credit": {
+        "date_iso": "2026-03-11",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:15:01.666067+00:00",
+        "title": "Apollo's Jim Zelter on the Future of Private Credit"
+      },
+      "can-software-survive-ai": {
+        "date_iso": "2026-03-10",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:15:05.046516+00:00",
+        "title": "Can Software Survive AI?"
+      },
+      "emerging-markets-stirred-but-not-yet-shaken": {
+        "date_iso": "2026-03-12",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:15:08.401048+00:00",
+        "title": "Emerging Markets: Stirred, But Not Yet Shaken"
+      },
+      "farallon-capitals-nicolas-giauque-on-investing-for-the-long-term": {
+        "date_iso": "2026-04-09",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:15:11.793462+00:00",
+        "title": "Farallon Capital's Nicolas Giauque on Investing for the Long Term"
+      },
+      "fundamentals-still-matter-lone-pines-david-craver": {
+        "date_iso": "2026-01-28",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:15:15.201991+00:00",
+        "title": "Fundamentals Still Matter: Lone Pine\u2019s David Craver"
+      },
+      "goldman-sachs-internationals-co-ceos-on-europes-opportunity-ai-and-market-volatility": {
+        "date_iso": "2026-03-12",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:15:18.807485+00:00",
+        "title": "Goldman Sachs International\u2019s Co-CEOs on Europe\u2019s Opportunity, AI, and Market Volatility"
+      },
+      "iran-conflict-how-long-and-how-bad": {
+        "date_iso": "",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:15:24.015117+00:00",
+        "title": "Iran Conflict: How Long, and How Bad?"
+      },
+      "natural-gas-in-focus-iran-conflict-could-have-very-painful-consequences": {
+        "date_iso": "2026-04-06",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:15:27.369719+00:00",
+        "title": "Natural Gas in Focus: Iran Conflict Could Have \u2018Very Painful\u2019 Consequences"
+      },
+      "oil-market-impacts-from-iran": {
+        "date_iso": "",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:15:30.739907+00:00",
+        "title": "Oil Market Impacts from Iran"
+      },
+      "private-credit-concerns-in-context": {
+        "date_iso": "",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:15:34.227825+00:00",
+        "title": "Private Credit Concerns in Context"
+      },
+      "the-business-builder-new-mountain-capitals-steve-klinsky": {
+        "date_iso": "2026-02-18",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:15:38.760079+00:00",
+        "title": "The Business Builder: New Mountain Capital's Steve Klinsky"
+      },
+      "the-new-ai-trades": {
+        "date_iso": "2026-02-11",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:15:46.124136+00:00",
+        "title": "The New AI Trades"
+      },
+      "why-arent-investors-more-worried": {
+        "date_iso": "2026-04-13",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:15:49.523252+00:00",
+        "title": "Why Aren\u2019t Investors More Worried?"
+      },
+      "why-japanese-stocks-could-keep-rallying": {
+        "date_iso": "2026-02-19",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:15:53.180893+00:00",
+        "title": "Why Japanese Stocks Could Keep Rallying"
+      }
+    },
+    "the_markets": {
+      "120-oil-ahead": {
+        "date_iso": "2026-03-03",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:13:42.578426+00:00",
+        "title": "$120 Oil Ahead?"
+      },
+      "a-massive-broadening-trade": {
+        "date_iso": "2026-01-22",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:13:48.277705+00:00",
+        "title": "\u201cA Massive Broadening Trade\u201d"
+      },
+      "a-new-way-to-trade-emerging-markets": {
+        "date_iso": "2026-02-26",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:13:51.919034+00:00",
+        "title": "A New Way to Trade Emerging Markets"
+      },
+      "big-opportunities-in-small-cap-equities": {
+        "date_iso": "2026-04-23",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:13:55.248843+00:00",
+        "title": "Big Opportunities in Small Cap Equities"
+      },
+      "big-tech-opportunity-lee-coppersmith-on-us-equities": {
+        "date_iso": "2026-04-08",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:14:00.582413+00:00",
+        "title": "Big Tech Opportunity: Lee Coppersmith on US Equities"
+      },
+      "chase-or-fade-the-rally-bobby-molavi-on-the-equity-bounce": {
+        "date_iso": "2026-04-16",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:14:03.904392+00:00",
+        "title": "Chase or Fade the Rally?: Bobby Molavi on the Equity Bounce"
+      },
+      "finding-opportunities-in-financials": {
+        "date_iso": "2026-02-04",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:14:07.181904+00:00",
+        "title": "Finding Opportunities in Financials"
+      },
+      "id-rather-be-a-bond-lindsay-rosner-on-fixed-income-opportunities": {
+        "date_iso": "2026-03-25",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:14:10.527603+00:00",
+        "title": "Lindsay Rosner: Why There Could Be More Opportunities in Fixed Income"
+      },
+      "investors-are-seeking-extreme-levels-of-hedging": {
+        "date_iso": "2026-03-12",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:14:16.499351+00:00",
+        "title": "Untangling Signals of Market Stress"
+      },
+      "long-gold-and-long-stocks": {
+        "date_iso": "2026-01-29",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:14:19.804887+00:00",
+        "title": "Long Gold and Long Stocks"
+      },
+      "new-worries": {
+        "date_iso": "2026-03-06",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:14:23.111916+00:00",
+        "title": "New Worries: The Latest Jobs Report and Geopolitical Dynamics"
+      },
+      "still-bullish-gold": {
+        "date_iso": "2026-02-12",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:14:30.630971+00:00",
+        "title": "\u201cStill Bullish Gold\u201d"
+      },
+      "stock-market-shakeout": {
+        "date_iso": "2026-02-09",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:14:33.950619+00:00",
+        "title": "Stock Market Shakeout"
+      },
+      "tech-comeback-ahead": {
+        "date_iso": "",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:14:34.610886+00:00",
+        "title": "Tech Comeback Ahead?"
+      },
+      "the-market-is-fragile-john-storey-on-finding-opportunities-in-turbulent-markets": {
+        "date_iso": "2026-03-18",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:14:37.894118+00:00",
+        "title": "\"The Market Is Fragile\": John Storey on Finding Opportunities in Turbulent Markets"
+      },
+      "which-equity-markets-will-outperform": {
+        "date_iso": "2025-01-14",
+        "email_id": "init_skip",
+        "sent_at": "2026-04-26T04:14:41.580866+00:00",
+        "title": "Which Equity Markets Will Outperform?"
+      }
+    }
+  },
+  "updated_at": "2026-04-26T04:15:53.180893+00:00"
+}
