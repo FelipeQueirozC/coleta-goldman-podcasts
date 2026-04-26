@@ -35,8 +35,8 @@ jobs:
         continue-on-error: true
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          RESEND_FROM_DOMAIN: ${{ vars.RESEND_FROM_DOMAIN }}
-          RESEND_TO_EMAIL: ${{ vars.RESEND_TO_EMAIL }}
+          RESEND_FROM_DOMAIN: ${{ secrets.RESEND_FROM_DOMAIN }}
+          RESEND_TO_EMAIL: ${{ secrets.RESEND_TO_EMAIL }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: python main.py
 
