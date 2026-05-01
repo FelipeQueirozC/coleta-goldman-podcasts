@@ -135,6 +135,12 @@
         "sent_at": "2026-04-26T04:14:00.582413+00:00",
         "title": "Big Tech Opportunity: Lee Coppersmith on US Equities"
       },
+      "can-the-china-rally-continue": {
+        "date_iso": "2025-10-22",
+        "email_id": "65c80604-a83b-4f62-8e20-2eb7662d4257",
+        "sent_at": "2026-05-01T14:45:10.733077+00:00",
+        "title": "Can the China Rally Continue?"
+      },
       "chase-or-fade-the-rally-bobby-molavi-on-the-equity-bounce": {
         "date_iso": "2026-04-16",
         "email_id": "init_skip",
@@ -203,5 +209,5 @@
       }
     }
   },
-  "updated_at": "2026-04-28T19:23:08.802595+00:00"
+  "updated_at": "2026-05-01T14:45:10.733106+00:00"
 }
