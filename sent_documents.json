@@ -177,6 +177,12 @@
         "sent_at": "2026-04-26T04:14:23.111916+00:00",
         "title": "New Worries: The Latest Jobs Report and Geopolitical Dynamics"
       },
+      "riding-the-ai-wave-megacap-tech-and-the-fed": {
+        "date_iso": "2026-04-30",
+        "email_id": "99c01ab4-d2d0-4527-bd2f-dd9df0aa9bf4",
+        "sent_at": "2026-05-04T15:53:39.539867+00:00",
+        "title": "Riding the AI Wave: Megacap Tech and the Fed"
+      },
       "still-bullish-gold": {
         "date_iso": "2026-02-12",
         "email_id": "init_skip",
@@ -209,5 +215,5 @@
       }
     }
   },
-  "updated_at": "2026-05-01T14:45:10.733106+00:00"
+  "updated_at": "2026-05-04T15:53:39.539900+00:00"
 }
