@@ -102,6 +102,12 @@
         "email_id": "init_skip",
         "sent_at": "2026-04-26T04:15:53.180893+00:00",
         "title": "Why Japanese Stocks Could Keep Rallying"
+      },
+      "will-ai-make-markets-less-efficient": {
+        "date_iso": "2026-05-01",
+        "email_id": "4a44d35a-ea8b-4e46-8c09-ad763ff3e288",
+        "sent_at": "2026-05-07T15:58:13.562005+00:00",
+        "title": "Will AI Make Markets Less Efficient?"
       }
     },
     "the_markets": {
@@ -215,5 +221,5 @@
       }
     }
   },
-  "updated_at": "2026-05-04T15:53:39.539900+00:00"
+  "updated_at": "2026-05-07T15:58:13.562036+00:00"
 }
