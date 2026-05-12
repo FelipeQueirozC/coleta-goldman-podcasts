@@ -25,6 +25,12 @@
         "sent_at": "2026-04-26T04:15:05.046516+00:00",
         "title": "Can Software Survive AI?"
       },
+      "cracks-in-private-credit": {
+        "date_iso": "",
+        "email_id": "b944cab9-5cc4-4fdf-a34c-fec9b2600b67",
+        "sent_at": "2026-05-12T16:12:02.288829+00:00",
+        "title": "Cracks in Private Credit"
+      },
       "emerging-markets-stirred-but-not-yet-shaken": {
         "date_iso": "2026-03-12",
         "email_id": "init_skip",
@@ -227,5 +233,5 @@
       }
     }
   },
-  "updated_at": "2026-05-11T16:23:10.199485+00:00"
+  "updated_at": "2026-05-12T16:12:02.288862+00:00"
 }
