@@ -180,7 +180,7 @@ def source_and_slug_from_episode_url(episode_url: str) -> tuple[dict, str]:
 
 def parse_episode_page(html: str) -> dict:
     soup = BeautifulSoup(html, "html.parser")
-    
+   
     # Read the title Goldman Sachs puts in the page metadata.
     title = ""
     title_meta = soup.select_one("meta[property='og:title']")
@@ -189,7 +189,7 @@ def parse_episode_page(html: str) -> dict:
     else:
         h1 = soup.select_one("h1")
         if h1: title = h1.get_text(strip=True)
-
+   
     # Read the publication date when it is available.
     date_iso = ""
     date_meta = soup.select_one("meta[property='article:published_time']")
@@ -198,8 +198,26 @@ def parse_episode_page(html: str) -> dict:
         if len(date_raw) >= 10:
             date_iso = date_raw[:10]
 
-    # Some episodes also link to a YouTube version.
-    youtube_url = ""
+    # If standard meta tag didn't yield a date, try JSON-LD
+    if not date_iso:
+        for script in soup.select('script[type="application/ld+json"]'):
+            try:
+                data = json.loads(script.string or script.get_text())
+            except json.JSONDecodeError:
+                continue
+            # Handle both dict and list
+            if isinstance(data, dict):
+                date_published = data.get("datePublished")
+                if date_published and isinstance(date_published, str) and len(date_published) >= 10:
+                    date_iso = date_published[:10]
+                    break
+            elif isinstance(data, list):
+                for item in data:
+                    if isinstance(item, dict):
+                        date_published = item.get("datePublished")
+                if date_iso:
+                    break
+
     for a in soup.select("a[href]"):
         href = a.get("href", "").strip()
         if "youtube.com" in href or "youtu.be" in href:
@@ -219,24 +237,51 @@ def discover_transcript_pdf_urls(page_html: str, page_url: str) -> list[str]:
     seen = set()
 
     def add_url(raw_url: str) -> None:
-        clean_url = raw_url.replace("\\/", "/").strip()
+        clean_url = raw_url.replace("\\\\", "/").strip()
         full_url = urljoin(page_url, clean_url)
         parsed = urlparse(full_url)
 
         if parsed.path.lower().startswith("/content/dam/gs/gscom/pdfs/"):
-            full_url = urljoin(BASE_URL, parsed.path.replace("/content/dam/gs/gscom", "", 1))
+            full_url = urljoin(BASE_URL, parsed.path.replace("/content/dam/gs/gscom/", "", 1))
 
         path = urlparse(full_url).path.lower()
         if path.endswith("transcript.pdf") and full_url not in seen:
             urls.append(full_url)
             seen.add(full_url)
 
+    # Check standard href attributes
     for a in soup.select("a[href]"):
         add_url(a.get("href", ""))
 
+    # Check for custom attributes like data-pdf-url or data-transcript-url
+    for tag in soup.select("[data-pdf-url], [data-transcript-url]"):
+        for attr in ["data-pdf-url", "data-transcript-url"]:
+            if tag.has_attr(attr):
+                add_url(tag[attr])
+
+    # Check JSON-LD blocks for PDF URLs
+    # Check JSON-LD blocks for PDF URLs
+    for script in soup.select('script[type="application/ld+json"]'):
+        try:
+            data = json.loads(script.string or script.get_text())
+        except json.JSONDecodeError:
+            continue
+        # Recursively search through JSON data for PDF URLs
+        def find_pdf_urls(obj):
+            if isinstance(obj, dict):
+                for value in obj.values():
+                    find_pdf_urls(value)
+            elif isinstance(obj, list):
+                for item in obj:
+                    find_pdf_urls(item)
+            elif isinstance(obj, str) and ".pdf" in obj.lower():
+                add_url(obj)
+        find_pdf_urls(data)
+        find_pdf_urls(data)
+
     # Some pages keep the transcript link inside page data instead of an HTML link.
     for match in re.findall(
-        r"https?://[^\"'<>\s\\]+transcript\.pdf|/(?:content/dam/gs/gscom/)?pdfs/[^\"'<>\s\\]+transcript\.pdf",
+        r"https?://[^\\\"'<>\\\\]+transcript\\.pdf|/(?:content/dam/gs/gscom/)?pdfs/[^\\\"'<>\\\\]+transcript\\.pdf",
         page_html,
         flags=re.IGNORECASE,
     ):
@@ -597,20 +642,25 @@ def collect_episode(session: requests.Session, source: dict, slug: str) -> tuple
     episode_url = urljoin(BASE_URL, f"{source['path_prefix']}{slug}")
     print(f"  -> Collecting episode: {episode_url}")
 
-    # Open the episode page to get title, date, and YouTube link.
-    ep_resp = session.get(episode_url, timeout=30)
-    ep_resp.raise_for_status()
-    meta = parse_episode_page(ep_resp.text)
+    # Open the episode page to get title, date, and YouTube link using Playwright
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page(user_agent="Mozilla/5.0 (compatible; GoldmanExtractor/1.0)")
+        page.goto(episode_url, wait_until="domcontentloaded", timeout=30000)
+        ep_html = page.content()
+        browser.close()
+
+    meta = parse_episode_page(ep_html)
 
     # Try the standard transcript name first. If that fails, use
     # transcript PDF links found on the episode page.
     expected_pdf_url = urljoin(BASE_URL, f"{source['pdf_prefix']}{slug}/transcript.pdf")
-    page_pdf_urls = discover_transcript_pdf_urls(ep_resp.text, ep_resp.url)
+    page_pdf_urls = discover_transcript_pdf_urls(ep_html, episode_url)
     pdf_url, pdf_bytes, tried_pdf_urls = fetch_transcript_pdf(
         session,
         expected_pdf_url,
         page_pdf_urls,
-        ep_resp.url,
+        episode_url,
     )
     transcript_text = ""
 
