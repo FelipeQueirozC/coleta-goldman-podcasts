@@ -25,10 +25,16 @@
         "sent_at": "2026-04-26T04:15:05.046516+00:00",
         "title": "Can Software Survive AI?"
       },
+      "can-the-asia-equity-rally-continue": {
+        "date_iso": "2026-05-19",
+        "email_id": "326a2d08-12af-4ac8-9174-e3e82d59bb9c",
+        "sent_at": "2026-05-20T16:42:45.937996+00:00",
+        "title": "Can the Asia Equity Rally Continue?"
+      },
       "cracks-in-private-credit": {
-        "date_iso": "",
-        "email_id": "b944cab9-5cc4-4fdf-a34c-fec9b2600b67",
-        "sent_at": "2026-05-12T16:12:02.288829+00:00",
+        "date_iso": "2026-05-11",
+        "email_id": "502e2af5-3eb1-4a23-9ab3-3383c93335e1",
+        "sent_at": "2026-05-16T20:21:52.743306+00:00",
         "title": "Cracks in Private Credit"
       },
       "emerging-markets-stirred-but-not-yet-shaken": {
@@ -184,9 +190,9 @@
         "title": "Untangling Signals of Market Stress"
       },
       "jerome-dortmans-on-the-drivers-of-oil-markets": {
-        "date_iso": "",
-        "email_id": "ed314c8a-3d3a-4431-a5c7-f9e065f21f59",
-        "sent_at": "2026-05-11T16:23:10.199457+00:00",
+        "date_iso": "2026-05-08",
+        "email_id": "33f66f0b-ba2b-4573-85a7-7945787a6d74",
+        "sent_at": "2026-05-16T20:21:42.981582+00:00",
         "title": "Jerome Dortmans on the Drivers of Oil Markets"
       },
       "long-gold-and-long-stocks": {
@@ -245,5 +251,5 @@
       }
     }
   },
-  "updated_at": "2026-05-15T15:54:10.264944+00:00"
+  "updated_at": "2026-05-20T16:42:45.938030+00:00"
 }
