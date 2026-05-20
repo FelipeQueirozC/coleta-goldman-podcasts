@@ -25,6 +25,12 @@
         "sent_at": "2026-04-26T04:15:05.046516+00:00",
         "title": "Can Software Survive AI?"
       },
+      "can-the-asia-equity-rally-continue": {
+        "date_iso": "2026-05-19",
+        "email_id": "326a2d08-12af-4ac8-9174-e3e82d59bb9c",
+        "sent_at": "2026-05-20T16:42:45.937996+00:00",
+        "title": "Can the Asia Equity Rally Continue?"
+      },
       "cracks-in-private-credit": {
         "date_iso": "2026-05-11",
         "email_id": "502e2af5-3eb1-4a23-9ab3-3383c93335e1",
@@ -245,5 +251,5 @@
       }
     }
   },
-  "updated_at": "2026-05-16T20:21:52.743330+00:00"
+  "updated_at": "2026-05-20T16:42:45.938030+00:00"
 }
