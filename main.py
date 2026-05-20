@@ -22,9 +22,10 @@ STATE_PATH = Path(__file__).with_name("sent_documents.json")
 OUTPUT_DIR = Path(__file__).parent / "output"
 BASE_URL = "https://www.goldmansachs.com"
 
-GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL = "groq/compound-mini"
-GROQ_INIT_MIN_SECONDS_BETWEEN_REQUESTS = 2.2
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
+GOOGLE_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent"
+GOOGLE_MODEL = "gemini-3.5-flash"
+GOOGLE_INIT_MIN_SECONDS_BETWEEN_REQUESTS = 2.2
 
 DISCLAIMER_PATTERN = re.compile(r"The opinions and views expressed.*?All rights reserved\.", flags=re.DOTALL)
 WHITESPACE_PATTERN = re.compile(r"[ \t]+")
@@ -386,9 +387,9 @@ def build_summary_prompts(source_id: str, source_name: str, title: str, transcri
     return system_prompt, user_prompt
 
 def summarize_transcript(source_id: str, source_name: str, title: str, transcript: str) -> str:
-    api_key = os.environ.get("GROQ_API_KEY")
+    api_key = os.environ.get("GOOGLE_API_KEY")
     if not api_key:
-        print("Warning: GROQ_API_KEY not found. Skipping summary.")
+        print("Warning: GOOGLE_API_KEY not found. Skipping summary.")
         return "Summary not available (Missing API Key)."
     
     if not transcript:
@@ -398,38 +399,30 @@ def summarize_transcript(source_id: str, source_name: str, title: str, transcrip
 
     try:
         response = requests.post(
-            GROQ_API_URL,
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            f"{GOOGLE_API_URL}?key={api_key}",
+            headers={"Content-Type": "application/json"},
             json={
-                "model": GROQ_MODEL,
-                "temperature": 0.2,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
+                "contents": [
+                    {"role": "user", "parts": [{"text": f"System: {system_prompt}\n\nUser: {user_prompt}"}]}
                 ],
+                "generationConfig": {
+                    "temperature": 0.2,
+                },
             },
             timeout=60,
         )
         response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"].strip()
-    except requests.exceptions.HTTPError as e:
-        status_code = e.response.status_code if e.response is not None else None
-        if status_code == 413:
-            message = "Summary not available: Groq rejected this transcript because the request payload was too large."
-            print(f"Warning: {message}")
-            return message
-        print(f"Warning: Summary generation failed ({e})")
-        return f"Summary generation failed: {e}"
+        return response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
     except requests.exceptions.RequestException as e:
         print(f"Warning: Summary generation failed ({e})")
         return f"Summary generation failed: {e}"
 
-def wait_before_init_summary(last_groq_request_at: float) -> float:
-    """Slow down the first bulk run so Groq does not reject requests."""
-    elapsed = time.monotonic() - last_groq_request_at
-    wait_seconds = GROQ_INIT_MIN_SECONDS_BETWEEN_REQUESTS - elapsed
+def wait_before_init_summary(last_request_at: float) -> float:
+    """Slow down the first bulk run so Google API does not reject requests."""
+    elapsed = time.monotonic() - last_request_at
+    wait_seconds = GOOGLE_INIT_MIN_SECONDS_BETWEEN_REQUESTS - elapsed
     if wait_seconds > 0:
-        print(f"     Init mode: waiting {wait_seconds:.1f}s before the next Groq summary.")
+        print(f"     Init mode: waiting {wait_seconds:.1f}s before the next Google summary.")
         time.sleep(wait_seconds)
     return time.monotonic()
 
@@ -778,7 +771,7 @@ def run(init_only: bool, dry_run: bool) -> int:
                 
                 try:
                     ep, pdf_bytes = collect_episode(session, source, slug)
-                    if init_only and not dry_run and ep.transcript_text and os.environ.get("GROQ_API_KEY"):
+                    if init_only and not dry_run and ep.transcript_text and os.environ.get("GOOGLE_API_KEY"):
                         last_groq_request_at = wait_before_init_summary(last_groq_request_at)
                     email_id, _ = process_episode(
                         ep,
