@@ -103,6 +103,12 @@
         "sent_at": "2026-04-26T04:15:34.227825+00:00",
         "title": "Private Credit Concerns in Context"
       },
+      "the-ai-investment-boom-when-will-it-pay-off": {
+        "date_iso": "2026-06-02",
+        "email_id": "25f314df-b0c8-4353-a364-f7eaf3c951c0",
+        "sent_at": "2026-06-02T17:58:49.765111+00:00",
+        "title": "The AI Investment Boom: When Will It Pay Off?"
+      },
       "the-business-builder-new-mountain-capitals-steve-klinsky": {
         "date_iso": "2026-02-18",
         "email_id": "init_skip",
@@ -269,5 +275,5 @@
       }
     }
   },
-  "updated_at": "2026-05-29T17:25:15.309141+00:00"
+  "updated_at": "2026-06-02T17:58:49.765133+00:00"
 }
