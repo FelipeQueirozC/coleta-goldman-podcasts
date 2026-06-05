@@ -159,6 +159,12 @@
         "sent_at": "2026-04-26T04:13:51.919034+00:00",
         "title": "A New Way to Trade Emerging Markets"
       },
+      "are-european-stocks-poised-to-outperform-the-s-and-p": {
+        "date_iso": "2026-06-05",
+        "email_id": "01228d99-e7fb-49d7-ac28-f496147d7f5c",
+        "sent_at": "2026-06-05T16:24:03.240474+00:00",
+        "title": "Are European Stocks Poised to Outperform the S&P?"
+      },
       "big-opportunities-in-small-cap-equities": {
         "date_iso": "2026-04-23",
         "email_id": "init_skip",
@@ -275,5 +281,5 @@
       }
     }
   },
-  "updated_at": "2026-06-02T17:58:49.765133+00:00"
+  "updated_at": "2026-06-05T16:24:03.240505+00:00"
 }
