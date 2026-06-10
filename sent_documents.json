@@ -103,6 +103,12 @@
         "sent_at": "2026-04-26T04:15:34.227825+00:00",
         "title": "Private Credit Concerns in Context"
       },
+      "private-markets-at-an-inflection-point": {
+        "date_iso": "2026-06-08",
+        "email_id": "ec30ff3d-9a56-4d20-b5d7-33ad77cdcc0c",
+        "sent_at": "2026-06-10T16:54:06.252071+00:00",
+        "title": "Private Markets at an Inflection Point"
+      },
       "the-ai-investment-boom-when-will-it-pay-off": {
         "date_iso": "2026-06-02",
         "email_id": "25f314df-b0c8-4353-a364-f7eaf3c951c0",
@@ -281,5 +287,5 @@
       }
     }
   },
-  "updated_at": "2026-06-05T16:24:03.240505+00:00"
+  "updated_at": "2026-06-10T16:54:06.252099+00:00"
 }
