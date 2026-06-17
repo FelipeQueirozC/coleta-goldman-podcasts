@@ -67,6 +67,12 @@
         "sent_at": "2026-04-26T04:15:18.807485+00:00",
         "title": "Goldman Sachs International\u2019s Co-CEOs on Europe\u2019s Opportunity, AI, and Market Volatility"
       },
+      "how-the-us-iran-deal-could-affect-oil-prices": {
+        "date_iso": "2026-06-17",
+        "email_id": "eeb8ba37-b8bd-41d4-938d-687d1c2d40b5",
+        "sent_at": "2026-06-17T16:49:54.420326+00:00",
+        "title": "How the US-Iran Deal Could Affect Oil Prices"
+      },
       "how-warsh-could-shape-fed-policy": {
         "date_iso": "2026-04-27",
         "email_id": "6425621b-0a5e-4ac6-9aea-1e9fefb3f279",
@@ -293,5 +299,5 @@
       }
     }
   },
-  "updated_at": "2026-06-12T16:37:49.049836+00:00"
+  "updated_at": "2026-06-17T16:49:54.420346+00:00"
 }
