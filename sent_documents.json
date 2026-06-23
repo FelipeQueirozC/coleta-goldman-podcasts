@@ -133,6 +133,12 @@
         "sent_at": "2026-04-26T04:15:46.124136+00:00",
         "title": "The New AI Trades"
       },
+      "what-the-ipo-boom-means-for-the-us-equity-outlook": {
+        "date_iso": "2026-06-23",
+        "email_id": "cfe6bd52-9ceb-4e27-80e7-cd159eee2154",
+        "sent_at": "2026-06-23T16:18:06.255610+00:00",
+        "title": "What the IPO Boom Means for the US Equity Outlook"
+      },
       "why-arent-investors-more-worried": {
         "date_iso": "2026-04-13",
         "email_id": "init_skip",
@@ -299,5 +305,5 @@
       }
     }
   },
-  "updated_at": "2026-06-17T16:49:54.420346+00:00"
+  "updated_at": "2026-06-23T16:18:06.255638+00:00"
 }
