@@ -216,9 +216,13 @@ def parse_episode_page(html: str) -> dict:
                 for item in data:
                     if isinstance(item, dict):
                         date_published = item.get("datePublished")
+                        if date_published and isinstance(date_published, str) and len(date_published) >= 10:
+                            date_iso = date_published[:10]
+                            break
                 if date_iso:
                     break
 
+    youtube_url = ""
     for a in soup.select("a[href]"):
         href = a.get("href", "").strip()
         if "youtube.com" in href or "youtu.be" in href:
