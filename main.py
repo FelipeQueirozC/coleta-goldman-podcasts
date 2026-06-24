@@ -389,14 +389,30 @@ def build_summary_prompts(source_id: str, source_name: str, title: str, transcri
     )
     return system_prompt, user_prompt
 
+class SummaryGenerationError(RuntimeError):
+    """Raised when the OpenCode summarizer cannot produce a usable summary.
+
+    These errors are fatal for the run on purpose: an empty / failed summary
+    should never silently end up in a delivered email. The surrounding
+    process_episode / run loop will catch this, mark the run as failed, and
+    exit non-zero so the GitHub Actions step fails and the operator is
+    alerted.
+    """
+
+
 def summarize_transcript(source_id: str, source_name: str, title: str, transcript: str) -> str:
     api_key = os.environ.get("OPENCODE_API_KEY")
     if not api_key:
-        print("Warning: OPENCODE_API_KEY not found. Skipping summary.")
-        return "Summary not available (Missing API Key)."
+        raise SummaryGenerationError(
+            "OPENCODE_API_KEY is not set in the environment. Refusing to send a "
+            "blank summary."
+        )
 
     if not transcript:
-        return "No transcript text available to summarize."
+        raise SummaryGenerationError(
+            f"Transcript is empty for '{title}' (source={source_id}); refusing "
+            "to send a blank summary. The PDF parsing likely failed upstream."
+        )
 
     base_url = os.environ.get("OPENCODE_BASE_URL", DEFAULT_OPENCODE_BASE_URL)
     model = os.environ.get("OPENCODE_SUMMARIZER_MODEL", DEFAULT_SUMMARIZER_MODEL)
@@ -419,19 +435,48 @@ def summarize_transcript(source_id: str, source_name: str, title: str, transcrip
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"# Transcript\n\n{user_prompt}"},
                 ],
-                "temperature": 0.2,
+                "temperature": 0.0,
                 "reasoning_effort": "high",
             },
             timeout=1800,
         )
         response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"].strip()
     except requests.exceptions.RequestException as e:
-        print(f"Warning: Summary generation failed ({e})")
-        return f"Summary generation failed: {e}"
-    except (KeyError, IndexError, TypeError) as e:
-        print(f"Warning: Unexpected OpenCode response shape: {e}")
-        return f"Summary generation failed: unexpected response ({e})"
+        body = ""
+        if e.response is not None:
+            try:
+                body = e.response.text[:800]
+            except Exception:
+                body = "<unreadable>"
+        raise SummaryGenerationError(
+            f"OpenCode HTTP error for '{title}' (model={model}, "
+            f"base_url={base_url}): {e}. Response body: {body}"
+        ) from e
+
+    try:
+        payload = response.json()
+        message = payload["choices"][0]["message"]
+        content = message.get("content")
+    except (KeyError, IndexError, TypeError, ValueError) as e:
+        raise SummaryGenerationError(
+            f"Unexpected OpenCode response shape for '{title}': "
+            f"{response.text[:800]}"
+        ) from e
+
+    if not content or not content.strip():
+        # Reasoning models (deepseek-v4-pro with reasoning_effort=high) put the
+        # thinking in message["reasoning_content"] and may return an empty
+        # content string. Print the raw response for debugging, then fail.
+        response_id = payload.get("id", "<no-id>")
+        finish_reason = payload.get("choices", [{}])[0].get("finish_reason", "<none>")
+        reasoning_preview = (message.get("reasoning_content") or "")[:400]
+        raise SummaryGenerationError(
+            f"OpenCode returned an empty summary for '{title}' "
+            f"(model={model}, response_id={response_id}, finish_reason={finish_reason}, "
+            f"reasoning_preview={reasoning_preview!r}). Refusing to send a blank email."
+        )
+
+    return content.strip()
 
 def wait_before_init_summary(last_request_at: float) -> float:
     """Slow down the first bulk run so the summarizer API does not reject requests."""
