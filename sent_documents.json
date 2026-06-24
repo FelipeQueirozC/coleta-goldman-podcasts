@@ -5,7 +5,7 @@
         "date_iso": "",
         "email_id": "init_skip",
         "sent_at": "2026-04-26T04:14:49.719967+00:00",
-        "title": "\u2018Affordability\u2019: Consumer Concerns and Government Proposals"
+        "title": "‘Affordability’: Consumer Concerns and Government Proposals"
       },
       "ai-exchanges-power-problems": {
         "date_iso": "2026-03-03",
@@ -35,7 +35,7 @@
         "date_iso": "2026-05-26",
         "email_id": "5c48413d-e14b-4c87-8d6c-b7de15306e82",
         "sent_at": "2026-05-26T17:18:20.253460+00:00",
-        "title": "\u2018Complexity is Our Friend\u2019: James Brocklebank on Advent's Private Equity Strategy"
+        "title": "‘Complexity is Our Friend’: James Brocklebank on Advent's Private Equity Strategy"
       },
       "cracks-in-private-credit": {
         "date_iso": "2026-05-11",
@@ -59,13 +59,13 @@
         "date_iso": "2026-01-28",
         "email_id": "init_skip",
         "sent_at": "2026-04-26T04:15:15.201991+00:00",
-        "title": "Fundamentals Still Matter: Lone Pine\u2019s David Craver"
+        "title": "Fundamentals Still Matter: Lone Pine’s David Craver"
       },
       "goldman-sachs-internationals-co-ceos-on-europes-opportunity-ai-and-market-volatility": {
         "date_iso": "2026-03-12",
         "email_id": "init_skip",
         "sent_at": "2026-04-26T04:15:18.807485+00:00",
-        "title": "Goldman Sachs International\u2019s Co-CEOs on Europe\u2019s Opportunity, AI, and Market Volatility"
+        "title": "Goldman Sachs International’s Co-CEOs on Europe’s Opportunity, AI, and Market Volatility"
       },
       "how-the-us-iran-deal-could-affect-oil-prices": {
         "date_iso": "2026-06-17",
@@ -91,17 +91,11 @@
         "sent_at": "2026-04-26T04:15:24.015117+00:00",
         "title": "Iran Conflict: How Long, and How Bad?"
       },
-      "maverick-capital-co-cios-on-finding-the-ai-winners": {
-        "date_iso": "2026-06-18",
-        "email_id": "ce517380-c3ed-45b7-a847-db2f32a66138",
-        "sent_at": "2026-06-24T12:54:22.390547+00:00",
-        "title": "Maverick Capital Co-CIOs on Finding the AI Winners"
-      },
       "natural-gas-in-focus-iran-conflict-could-have-very-painful-consequences": {
         "date_iso": "2026-04-06",
         "email_id": "init_skip",
         "sent_at": "2026-04-26T04:15:27.369719+00:00",
-        "title": "Natural Gas in Focus: Iran Conflict Could Have \u2018Very Painful\u2019 Consequences"
+        "title": "Natural Gas in Focus: Iran Conflict Could Have ‘Very Painful’ Consequences"
       },
       "oil-market-impacts-from-iran": {
         "date_iso": "",
@@ -149,7 +143,7 @@
         "date_iso": "2026-04-13",
         "email_id": "init_skip",
         "sent_at": "2026-04-26T04:15:49.523252+00:00",
-        "title": "Why Aren\u2019t Investors More Worried?"
+        "title": "Why Aren’t Investors More Worried?"
       },
       "why-japanese-stocks-could-keep-rallying": {
         "date_iso": "2026-02-19",
@@ -175,7 +169,7 @@
         "date_iso": "2026-01-22",
         "email_id": "init_skip",
         "sent_at": "2026-04-26T04:13:48.277705+00:00",
-        "title": "\u201cA Massive Broadening Trade\u201d"
+        "title": "“A Massive Broadening Trade”"
       },
       "a-new-way-to-trade-emerging-markets": {
         "date_iso": "2026-02-26",
@@ -265,7 +259,7 @@
         "date_iso": "2026-02-12",
         "email_id": "init_skip",
         "sent_at": "2026-04-26T04:14:30.630971+00:00",
-        "title": "\u201cStill Bullish Gold\u201d"
+        "title": "“Still Bullish Gold”"
       },
       "stock-market-shakeout": {
         "date_iso": "2026-02-09",
@@ -311,5 +305,5 @@
       }
     }
   },
-  "updated_at": "2026-06-24T12:54:22.390579+00:00"
+  "updated_at": "2026-06-24T10:26:00+00:00"
 }
