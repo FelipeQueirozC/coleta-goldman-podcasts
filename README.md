@@ -5,7 +5,7 @@ This project checks two Goldman Sachs podcast pages every weekday:
 - The Markets
 - Goldman Sachs Exchanges
 
-When it finds a new episode, it downloads the transcript PDF, turns the transcript into text, asks Groq for a short summary, and emails the summary plus transcript using Resend.
+When it finds a new episode, it downloads the transcript PDF, turns the transcript into text, asks the OpenCode Go API (DeepSeek v4 Pro) for a short summary, and emails the summary plus transcript using Resend.
 
 Goldman Sachs does not always use the same transcript file name. The script first tries the usual `transcript.pdf` address, then falls back to transcript PDF links found on the episode page.
 
@@ -60,9 +60,17 @@ One or more destination email addresses. Use commas for multiple recipients:
 person@example.com,another@example.com
 ```
 
-`GROQ_API_KEY`
+`OPENCODE_API_KEY`
 
-Your Groq API key. The script needs this to summarize transcripts.
+Your OpenCode Go API key. The script needs this to summarize transcripts.
+
+`OPENCODE_BASE_URL` (optional)
+
+The OpenCode Go endpoint base URL. Defaults to `https://opencode.ai/zen/go/v1`.
+
+`OPENCODE_SUMMARIZER_MODEL` (optional)
+
+The model used for summarization. Defaults to `deepseek-v4-pro`.
 
 ## First Run
 
@@ -74,7 +82,7 @@ python main.py --init
 
 This scans the current podcast pages and marks all existing episodes as already handled. It saves markdown files locally, but it does not send emails. This avoids flooding your inbox with old episodes.
 
-During initialization, the script also slows down Groq summary requests so it stays under the usual 30-requests-per-minute limit. The first run can therefore take a few minutes.
+During initialization, the script also slows down summary requests so it stays under the usual 30-requests-per-minute limit. The first run can therefore take a few minutes.
 
 ## Normal Run
 
@@ -104,7 +112,7 @@ Use single-episode mode when you want to test collection, summarization, markdow
 python main.py --episode-url "https://www.goldmansachs.com/insights/goldman-sachs-exchanges/why-arent-investors-more-worried/"
 ```
 
-To test only the collection path without calling Groq, saving files, or sending email:
+To test only the collection path without calling the summarizer, saving files, or sending email:
 
 ```bash
 python main.py --episode-url "https://www.goldmansachs.com/insights/goldman-sachs-exchanges/why-arent-investors-more-worried/" --dry-run
@@ -117,7 +125,7 @@ The workflow in `.github/workflows/daily.yaml` runs the script every weekday at 
 Set these GitHub secrets:
 
 - `RESEND_API_KEY`
-- `GROQ_API_KEY`
+- `OPENCODE_API_KEY`
 
 Set these GitHub repository variables:
 

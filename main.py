@@ -22,10 +22,9 @@ STATE_PATH = Path(__file__).with_name("sent_documents.json")
 OUTPUT_DIR = Path(__file__).parent / "output"
 BASE_URL = "https://www.goldmansachs.com"
 
-GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
-GOOGLE_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent"
-GOOGLE_MODEL = "gemini-3.5-flash"
-GOOGLE_INIT_MIN_SECONDS_BETWEEN_REQUESTS = 2.2
+DEFAULT_OPENCODE_BASE_URL = "https://opencode.ai/zen/go/v1"
+DEFAULT_SUMMARIZER_MODEL = "deepseek-v4-pro"
+INIT_MIN_SECONDS_BETWEEN_REQUESTS = 2.2
 
 DISCLAIMER_PATTERN = re.compile(r"The opinions and views expressed.*?All rights reserved\.", flags=re.DOTALL)
 WHITESPACE_PATTERN = re.compile(r"[ \t]+")
@@ -391,42 +390,55 @@ def build_summary_prompts(source_id: str, source_name: str, title: str, transcri
     return system_prompt, user_prompt
 
 def summarize_transcript(source_id: str, source_name: str, title: str, transcript: str) -> str:
-    api_key = os.environ.get("GOOGLE_API_KEY")
+    api_key = os.environ.get("OPENCODE_API_KEY")
     if not api_key:
-        print("Warning: GOOGLE_API_KEY not found. Skipping summary.")
+        print("Warning: OPENCODE_API_KEY not found. Skipping summary.")
         return "Summary not available (Missing API Key)."
-    
+
     if not transcript:
         return "No transcript text available to summarize."
 
+    base_url = os.environ.get("OPENCODE_BASE_URL", DEFAULT_OPENCODE_BASE_URL)
+    model = os.environ.get("OPENCODE_SUMMARIZER_MODEL", DEFAULT_SUMMARIZER_MODEL)
     system_prompt, user_prompt = build_summary_prompts(source_id, source_name, title, transcript)
 
+    # The big model sees:
+    #   System: the prompt we built (style, structure, instructions)
+    #   User:   the transcript
     try:
         response = requests.post(
-            f"{GOOGLE_API_URL}?key={api_key}",
-            headers={"Content-Type": "application/json"},
-            json={
-                "contents": [
-                    {"role": "user", "parts": [{"text": f"System: {system_prompt}\n\nUser: {user_prompt}"}]}
-                ],
-                "generationConfig": {
-                    "temperature": 0.2,
-                },
+            base_url.rstrip("/") + "/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "User-Agent": "coleta-goldman-podcasts/0.1",
             },
-            timeout=60,
+            json={
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"# Transcript\n\n{user_prompt}"},
+                ],
+                "temperature": 0.2,
+                "reasoning_effort": "high",
+            },
+            timeout=1800,
         )
         response.raise_for_status()
-        return response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+        return response.json()["choices"][0]["message"]["content"].strip()
     except requests.exceptions.RequestException as e:
         print(f"Warning: Summary generation failed ({e})")
         return f"Summary generation failed: {e}"
+    except (KeyError, IndexError, TypeError) as e:
+        print(f"Warning: Unexpected OpenCode response shape: {e}")
+        return f"Summary generation failed: unexpected response ({e})"
 
 def wait_before_init_summary(last_request_at: float) -> float:
-    """Slow down the first bulk run so Google API does not reject requests."""
+    """Slow down the first bulk run so the summarizer API does not reject requests."""
     elapsed = time.monotonic() - last_request_at
-    wait_seconds = GOOGLE_INIT_MIN_SECONDS_BETWEEN_REQUESTS - elapsed
+    wait_seconds = INIT_MIN_SECONDS_BETWEEN_REQUESTS - elapsed
     if wait_seconds > 0:
-        print(f"     Init mode: waiting {wait_seconds:.1f}s before the next Google summary.")
+        print(f"     Init mode: waiting {wait_seconds:.1f}s before the next summary.")
         time.sleep(wait_seconds)
     return time.monotonic()
 
@@ -746,7 +758,7 @@ def run(init_only: bool, dry_run: bool) -> int:
     state = load_state()
     new_episodes_found = False
     had_errors = False
-    last_groq_request_at = 0.0
+    last_summary_request_at = 0.0
 
     with requests.Session() as session:
         session.headers.update({"User-Agent": "Mozilla/5.0 (compatible; GoldmanExtractor/1.0)"})
@@ -775,8 +787,8 @@ def run(init_only: bool, dry_run: bool) -> int:
                 
                 try:
                     ep, pdf_bytes = collect_episode(session, source, slug)
-                    if init_only and not dry_run and ep.transcript_text and os.environ.get("GOOGLE_API_KEY"):
-                        last_groq_request_at = wait_before_init_summary(last_groq_request_at)
+                    if init_only and not dry_run and ep.transcript_text and os.environ.get("OPENCODE_API_KEY"):
+                        last_summary_request_at = wait_before_init_summary(last_summary_request_at)
                     email_id, _ = process_episode(
                         ep,
                         source,
@@ -810,7 +822,7 @@ def run(init_only: bool, dry_run: bool) -> int:
 def main():
     parser = argparse.ArgumentParser(description="Goldman Sachs Podcasts Extractor")
     parser.add_argument("--init", action="store_true", help="Download, summarize, and save all current episodes locally without sending emails.")
-    parser.add_argument("--dry-run", action="store_true", help="Fetch metadata but do not call Groq, save files, send emails, or update state.")
+    parser.add_argument("--dry-run", action="store_true", help="Fetch metadata but do not call the summarizer, save files, send emails, or update state.")
     parser.add_argument("--episode-url", help="Process exactly one episode URL for testing. Sends email unless --dry-run is also used. Does not update sent_documents.json.")
     args = parser.parse_args()
 
