@@ -67,6 +67,12 @@
         "sent_at": "2026-04-26T04:15:18.807485+00:00",
         "title": "Goldman Sachs International\u2019s Co-CEOs on Europe\u2019s Opportunity, AI, and Market Volatility"
       },
+      "how-tariffs-will-impact-the-US-economy": {
+        "date_iso": "2026-06-17",
+        "email_id": "c7741c47-d563-4402-9701-07101d87d87d",
+        "sent_at": "2026-07-01T16:15:19.559977+00:00",
+        "title": "How tariffs will impact the US economy"
+      },
       "how-the-us-iran-deal-could-affect-oil-prices": {
         "date_iso": "2026-06-17",
         "email_id": "eeb8ba37-b8bd-41d4-938d-687d1c2d40b5",
@@ -317,5 +323,5 @@
       }
     }
   },
-  "updated_at": "2026-06-26T16:05:37.436976+00:00"
+  "updated_at": "2026-07-01T16:15:19.560025+00:00"
 }
