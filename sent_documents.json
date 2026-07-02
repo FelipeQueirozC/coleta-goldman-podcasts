@@ -85,6 +85,12 @@
         "sent_at": "2026-04-28T19:23:08.802567+00:00",
         "title": "How Warsh Could Shape Fed Policy"
       },
+      "how-will-ai-impact-the-labor-market": {
+        "date_iso": "2026-07-02",
+        "email_id": "288f782c-1b8e-4547-a2e2-c026ef3a9abc",
+        "sent_at": "2026-07-02T15:59:14.416663+00:00",
+        "title": "How Will AI Impact the Labor Market?"
+      },
       "innovation-and-inflation-twin-forces-reshaping-portfolios": {
         "date_iso": "2026-05-07",
         "email_id": "3741b193-8426-404f-8c07-3dec2081ca79",
@@ -323,5 +329,5 @@
       }
     }
   },
-  "updated_at": "2026-07-01T16:15:19.560025+00:00"
+  "updated_at": "2026-07-02T15:59:14.416696+00:00"
 }
