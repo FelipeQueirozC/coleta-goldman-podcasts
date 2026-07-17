@@ -31,6 +31,12 @@
         "sent_at": "2026-05-20T18:16:15.245417+00:00",
         "title": "Can the Asia Equity Rally Continue?"
       },
+      "citadels-ken-griffin-on-ai-us-china-tensions-and-us-data-centers": {
+        "date_iso": "2026-07-09",
+        "email_id": "48a89bd1-80af-4a36-ad9a-b8755fc967a0",
+        "sent_at": "2026-07-17T15:07:54.615300+00:00",
+        "title": "Citadel's Ken Griffin on AI, US-China Tensions, and US Data Centers"
+      },
       "complexity-is-our-friend-james-brocklebank-on-advents-private-equity-strategy": {
         "date_iso": "2026-05-26",
         "email_id": "5c48413d-e14b-4c87-8d6c-b7de15306e82",
@@ -66,6 +72,12 @@
         "email_id": "init_skip",
         "sent_at": "2026-04-26T04:15:18.807485+00:00",
         "title": "Goldman Sachs International\u2019s Co-CEOs on Europe\u2019s Opportunity, AI, and Market Volatility"
+      },
+      "how-falling-launch-costs-and-ai-are-driving-the-space-economy": {
+        "date_iso": "2026-07-15",
+        "email_id": "9bfa7afc-ae62-4603-8fe8-63095bdcdd29",
+        "sent_at": "2026-07-17T15:08:55.538136+00:00",
+        "title": "How Falling Launch Costs and AI Are Driving the Space Economy"
       },
       "how-tariffs-will-impact-the-US-economy": {
         "date_iso": "2026-06-17",
@@ -231,6 +243,12 @@
         "sent_at": "2026-04-26T04:14:07.181904+00:00",
         "title": "Finding Opportunities in Financials"
       },
+      "how-earnings-volatility-and-ai-capex-are-affecting-us-markets": {
+        "date_iso": "2026-07-17",
+        "email_id": "e715ed41-2e2e-45eb-b878-df46877acda9",
+        "sent_at": "2026-07-17T15:05:14.116167+00:00",
+        "title": "How Earnings, Volatility, and AI Capex Are Affecting US Markets"
+      },
       "id-rather-be-a-bond-lindsay-rosner-on-fixed-income-opportunities": {
         "date_iso": "2026-03-25",
         "email_id": "init_skip",
@@ -315,6 +333,12 @@
         "sent_at": "2026-05-22T16:12:49.897372+00:00",
         "title": "Why Rates Could Keep Rising: Phillip Lee on Treasuries"
       },
+      "why-the-us-dollar-could-continue-to-strengthen": {
+        "date_iso": "2026-07-10",
+        "email_id": "9282f97d-332f-4984-933d-5107e17105e5",
+        "sent_at": "2026-07-17T15:06:23.989458+00:00",
+        "title": "Why the US Dollar Could Continue to Strengthen"
+      },
       "why-there-may-be-more-investment-opportunities-in-internet-stocks": {
         "date_iso": "2026-05-29",
         "email_id": "007fad07-9435-4803-8595-fc9453d4f597",
@@ -329,5 +353,5 @@
       }
     }
   },
-  "updated_at": "2026-07-02T15:59:14.416696+00:00"
+  "updated_at": "2026-07-17T15:08:55.538153+00:00"
 }
