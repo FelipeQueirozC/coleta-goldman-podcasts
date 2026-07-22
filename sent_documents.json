@@ -163,6 +163,12 @@
         "sent_at": "2026-04-26T04:15:46.124136+00:00",
         "title": "The New AI Trades"
       },
+      "us-midyear-outlook-geopolitical-shocks-the-new-fed-era-and-growth": {
+        "date_iso": "2026-07-21",
+        "email_id": "fcd80f15-616d-44ca-8f3e-4695e9f769a3",
+        "sent_at": "2026-07-22T15:26:19.762156+00:00",
+        "title": "US Midyear Outlook: Geopolitical Shocks, the New Fed Era, and Growth"
+      },
       "what-the-ipo-boom-means-for-the-us-equity-outlook": {
         "date_iso": "2026-06-23",
         "email_id": "cfe6bd52-9ceb-4e27-80e7-cd159eee2154",
@@ -353,5 +359,5 @@
       }
     }
   },
-  "updated_at": "2026-07-17T15:08:55.538153+00:00"
+  "updated_at": "2026-07-22T15:26:19.762202+00:00"
 }
