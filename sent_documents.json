@@ -193,6 +193,12 @@
         "sent_at": "2026-06-23T16:18:06.255610+00:00",
         "title": "What the IPO Boom Means for the US Equity Outlook"
       },
+      "what-the-us-japan-currency-intervention-means-for-the-yen-rates-and-the-dollar": {
+        "date_iso": "2026-08-12",
+        "email_id": "14683c88-b5c3-4be0-ac04-a734ca0c0f3d",
+        "sent_at": "2026-08-13T14:51:08.778023+00:00",
+        "title": "What the US-Japan Currency Intervention Means for the Yen, Rates, and the Dollar"
+      },
       "why-arent-investors-more-worried": {
         "date_iso": "2026-04-13",
         "email_id": "init_skip",
@@ -389,5 +395,5 @@
       }
     }
   },
-  "updated_at": "2026-08-07T14:45:34.021252+00:00"
+  "updated_at": "2026-08-13T14:51:08.778052+00:00"
 }
