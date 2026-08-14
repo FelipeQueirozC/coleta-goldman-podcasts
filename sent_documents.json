@@ -285,6 +285,12 @@
         "sent_at": "2026-07-17T15:05:14.116167+00:00",
         "title": "How Earnings, Volatility, and AI Capex Are Affecting US Markets"
       },
+      "how-inflation-and-fiscal-policy-are-driving-us-treasury-markets": {
+        "date_iso": "2026-08-14",
+        "email_id": "46cb8932-3ab2-40f4-abd0-6e020281479c",
+        "sent_at": "2026-08-14T14:44:24.986777+00:00",
+        "title": "How Inflation and Fiscal Policy Are Driving US Treasury Markets"
+      },
       "id-rather-be-a-bond-lindsay-rosner-on-fixed-income-opportunities": {
         "date_iso": "2026-03-25",
         "email_id": "init_skip",
@@ -395,5 +401,5 @@
       }
     }
   },
-  "updated_at": "2026-08-13T14:51:08.778052+00:00"
+  "updated_at": "2026-08-14T14:44:24.986797+00:00"
 }
