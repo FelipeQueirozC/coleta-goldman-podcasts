@@ -19,6 +19,12 @@
         "sent_at": "2026-04-26T04:15:01.666067+00:00",
         "title": "Apollo's Jim Zelter on the Future of Private Credit"
       },
+      "building-ai-systems-for-capital-markets": {
+        "date_iso": "2026-08-24",
+        "email_id": "7ae604e7-ed64-42f4-9a9b-8d5ef7033a3a",
+        "sent_at": "2026-08-25T14:34:40.836396+00:00",
+        "title": "Building AI Systems for Capital Markets"
+      },
       "can-software-survive-ai": {
         "date_iso": "2026-03-10",
         "email_id": "init_skip",
@@ -413,5 +419,5 @@
       }
     }
   },
-  "updated_at": "2026-08-24T14:30:59.208096+00:00"
+  "updated_at": "2026-08-25T14:34:40.836425+00:00"
 }
