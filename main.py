@@ -547,8 +547,14 @@ def extract_speaker_names(transcript_text: str) -> list[str]:
     speakers = []
     for raw_line in transcript_text.splitlines():
         match = SPEAKER_LINE_PATTERN.match(raw_line.strip())
-        if match and match.group(1) not in speakers:
-            speakers.append(match.group(1))
+        if not match:
+            continue
+        name = match.group(1)
+        normalized = name.lower()
+        if normalized.endswith(" exchanges") or normalized in {"the markets", "goldman sachs"}:
+            continue
+        if name not in speakers:
+            speakers.append(name)
     return speakers
 
 

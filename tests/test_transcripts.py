@@ -19,7 +19,8 @@ def test_speaker_names_are_taken_from_dialogue_without_splitting_titles():
     transcript = (
         "Rich Friedman: First answer.\n\n"
         "Alison Mass: First question.\n\n"
-        "Rich Friedman: Second answer."
+        "Rich Friedman: Second answer.\n\n"
+        "Sachs Exchanges: Follow the show."
     )
 
     assert main.extract_speaker_names(transcript) == ["Rich Friedman", "Alison Mass"]
