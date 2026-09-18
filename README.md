@@ -1,135 +1,98 @@
-# Goldman Sachs Podcasts Extractor
+# Goldman Sachs Podcasts
 
-This project checks two Goldman Sachs podcast pages every weekday:
+Collects Goldman Sachs The Markets and Goldman Sachs Exchanges episodes. The pipeline reads Goldman transcript PDFs or inline page transcripts, creates a routed English investor summary, and delivers it by email and Telegram.
 
-- The Markets
-- Goldman Sachs Exchanges
+## Summary pipeline
 
-When it finds a new episode, it downloads the transcript PDF, turns the transcript into text, asks the OpenCode Go API (DeepSeek v4 Pro) for a short summary, and emails the summary plus transcript using Resend.
+Stage 1 uses the newest available DeepSeek Flash model. It classifies the episode format and creates an episode-specific prompt.
 
-Goldman Sachs does not always use the same transcript file name. The script first tries the usual `transcript.pdf` address, then falls back to transcript PDF links found on the episode page.
+Stage 2 uses the newest available DeepSeek Pro model. It creates an English memo with these sections:
 
-## How It Remembers Sent Episodes
+- Key Takeaway
+- Narrative Summary
+- Investor Interpretation
+- Key Risks and Open Questions
+- What to Monitor
+- Best Insights
+- Relevance
 
-The script writes a file called `sent_documents.json`.
+Model discovery queries OpenCode `/models`. Fixed model IDs can override dynamic selection.
 
-That file is the memory of the project. It stores which episodes were already handled, grouped by podcast. This prevents the same episode from being emailed again on the next run.
+## Transcript sources
 
-Keep this file in the repository so GitHub Actions can update it after each successful run.
+The collector uses this order:
 
-## Setup
+1. Valid transcript PDF
+2. Inline transcript on the episode page
+3. Visible failure
 
-Create a virtual environment and install the required packages:
+## Delivery
+
+Email includes a plain-text fallback, Kinea-style HTML summary, and full transcript Markdown attachment.
+
+Telegram receives a short HTML message and one HTML document containing the summary and full transcript.
+
+Failures go to `TELEGRAM_ERROR_CHAT_ID`. Identical sanitized failures are sent once.
+
+## OptiPlex setup
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate  # macOS/Linux
-.\.venv\Scripts\activate   # Windows PowerShell
-pip install -r requirements.txt
-playwright install chromium
-```
-
-Create your local environment file:
-
-```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/playwright install chromium
 cp .env.example .env
 ```
 
-Then fill `.env` with your real values.
+Shared secrets and Telegram channel IDs come from `/etc/collector-env/common.env`.
 
-## Required Environment Variables
-
-`RESEND_API_KEY`
-
-Your Resend API key. The script needs this to send emails.
-
-`RESEND_FROM_DOMAIN`
-
-The verified sending domain in Resend, for example `bot.example.com`.
-
-The script builds the sender address automatically for each podcast:
-
-- `gs.themarkets@your-domain`
-- `gs.exchanges@your-domain`
-
-`RESEND_TO_EMAIL`
-
-One or more destination email addresses. Use commas for multiple recipients:
+Project values in `.env`:
 
 ```text
-person@example.com,another@example.com
+RESEND_FROM_DOMAIN=bot.qecapital.com.br
+RESEND_TO_EMAIL=<recipient list>
+OPENCODE_BASE_URL=https://opencode.ai/zen/go/v1
+OPENCODE_PROMPT_BUILDER_MODEL=latest-deepseek-flash
+OPENCODE_SUMMARIZER_MODEL=latest-deepseek-pro
+STATE_PATH=var/sent_documents.json
 ```
 
-`OPENCODE_API_KEY`
-
-Your OpenCode Go API key. The script needs this to summarize transcripts.
-
-`OPENCODE_BASE_URL` (optional)
-
-The OpenCode Go endpoint base URL. Defaults to `https://opencode.ai/zen/go/v1`.
-
-`OPENCODE_SUMMARIZER_MODEL` (optional)
-
-The model used for summarization. Defaults to `deepseek-v4-pro`.
-
-## First Run
-
-Use initialization mode before the first normal run:
+Install the systemd timer:
 
 ```bash
-python main.py --init
+sudo sh deploy/install.sh
 ```
 
-This scans the current podcast pages and marks all existing episodes as already handled. It saves markdown files locally, but it does not send emails. This avoids flooding your inbox with old episodes.
+The timer runs Monday through Friday at 11:00 BRT.
 
-During initialization, the script also slows down summary requests so it stays under the usual 30-requests-per-minute limit. The first run can therefore take a few minutes.
+## Commands
 
-## Normal Run
-
-Run the mailer normally with:
-
-```bash
-python main.py
-```
-
-This checks both podcast pages, skips anything already listed in `sent_documents.json`, and emails only new episodes.
-
-## Dry Run
-
-Use dry run mode when you want to test discovery without changing anything:
+Live discovery without models, delivery, or state changes:
 
 ```bash
 python main.py --dry-run
 ```
 
-Dry run mode fetches the podcast pages and reports what it would do. It does not summarize transcripts, save markdown files, send emails, or update `sent_documents.json`.
-
-## Single Episode Test
-
-Use single-episode mode when you want to test collection, summarization, markdown saving, and email delivery for one episode without touching `sent_documents.json`:
+Full preview for one episode without delivery or state changes:
 
 ```bash
-python main.py --episode-url "https://www.goldmansachs.com/insights/goldman-sachs-exchanges/why-arent-investors-more-worried/"
+python main.py --episode-url "https://www.goldmansachs.com/insights/the-markets/example"
 ```
 
-To test only the collection path without calling the summarizer, saving files, or sending email:
+Controlled OptiPlex catch-up:
 
 ```bash
-python main.py --episode-url "https://www.goldmansachs.com/insights/goldman-sachs-exchanges/why-arent-investors-more-worried/" --dry-run
+python main.py --migration-catch-up
 ```
 
-## GitHub Actions
+Controlled catch-up sends only the newest pending episode from each podcast. It marks older pending episodes as `skipped-migration` after the selected episode succeeds.
 
-The workflow in `.github/workflows/daily.yaml` runs the script every weekday at 14:00 UTC, which is 11:00 in Sao Paulo during BRT.
+## Tests
 
-Set these GitHub secrets:
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
 
-- `RESEND_API_KEY`
-- `OPENCODE_API_KEY`
+See `docs/optiplex-implementation-plan.md` for the complete approved design and acceptance criteria.
 
-Set these GitHub repository variables:
-
-- `RESEND_FROM_DOMAIN`
-- `RESEND_TO_EMAIL`
-
-After each run, GitHub Actions commits any change to `sent_documents.json` so the next run knows what was already sent.
+GitHub Actions permits manual runs only after cutover. Do not run GitHub and OptiPlex schedules together.

@@ -1,0 +1,19 @@
+[Unit]
+Description=Goldman Sachs podcast summarizer
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=usuario
+WorkingDirectory=/home/usuario/projetos/coleta-goldman-podcasts
+EnvironmentFile=-/etc/collector-env/common.env
+EnvironmentFile=/home/usuario/projetos/coleta-goldman-podcasts/.env
+ExecStart=/home/usuario/projetos/coleta-goldman-podcasts/.venv/bin/python main.py
+StandardOutput=journal
+StandardError=journal
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/usuario/projetos/coleta-goldman-podcasts

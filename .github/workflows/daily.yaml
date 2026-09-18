@@ -1,8 +1,6 @@
 name: Daily Goldman Mailer
 
 on:
-  schedule:
-    - cron: "0 14 * * 1-5" # 11am BRT
   workflow_dispatch:
 
 permissions:
@@ -38,6 +36,10 @@ jobs:
           RESEND_FROM_DOMAIN: ${{ secrets.RESEND_FROM_DOMAIN }}
           RESEND_TO_EMAIL: ${{ secrets.RESEND_TO_EMAIL }}
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_DELIVERY_CHAT_ID: ${{ secrets.TELEGRAM_DELIVERY_CHAT_ID }}
+          TELEGRAM_ERROR_CHAT_ID: ${{ secrets.TELEGRAM_ERROR_CHAT_ID }}
+          STATE_PATH: sent_documents.json
         run: python main.py
 
       - name: Commit sent state

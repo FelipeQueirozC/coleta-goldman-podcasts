@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Goldman Sachs podcasts weekdays at 11:00 BRT
+
+[Timer]
+OnCalendar=Mon..Fri *-*-* 11:00:00 America/Sao_Paulo
+Persistent=true
+Unit=goldman-podcasts.service
+
+[Install]
+WantedBy=timers.target
