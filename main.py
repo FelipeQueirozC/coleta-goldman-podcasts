@@ -543,6 +543,15 @@ def reflow_transcript_text(transcript_text: str) -> str:
     flush_current()
     return "\n\n".join(paragraphs).strip()
 
+def extract_speaker_names(transcript_text: str) -> list[str]:
+    speakers = []
+    for raw_line in transcript_text.splitlines():
+        match = SPEAKER_LINE_PATTERN.match(raw_line.strip())
+        if match and match.group(1) not in speakers:
+            speakers.append(match.group(1))
+    return speakers
+
+
 def recording_date_to_iso(recording_date: str) -> str:
     if not recording_date:
         return ""
@@ -583,6 +592,7 @@ def collect_episode(session: requests.Session, source: dict, slug: str) -> tuple
         print(f"     Warning: transcript not found. Tried PDFs: {tried_list}")
     transcript_header = parse_transcript_header(transcript_text)
     transcript_text = reflow_transcript_text(strip_transcript_header(transcript_text))
+    speakers = extract_speaker_names(transcript_text)
     date_iso = meta["date_iso"] or recording_date_to_iso(transcript_header.get("recording_date", ""))
 
     episode = Episode(
@@ -597,7 +607,7 @@ def collect_episode(session: requests.Session, source: dict, slug: str) -> tuple
         pdf_url=pdf_url,
         transcript_series=transcript_header.get("series", ""),
         transcript_title=transcript_header.get("title", ""),
-        transcript_people=transcript_header.get("people", []),
+        transcript_people=speakers or transcript_header.get("people", []),
         recording_date=transcript_header.get("recording_date", ""),
         transcript_text=transcript_text,
         transcript_source=transcript_source,
