@@ -837,6 +837,7 @@ def run_single_episode(episode_url: str, dry_run: bool) -> int:
     markdown_path = preview_dir / formatting.markdown_filename(episode)
     html_path = preview_dir / formatting.html_filename(episode)
     email_path = preview_dir / (formatting.attachment_basename(episode) + "-email.html")
+    routing_path = preview_dir / (formatting.attachment_basename(episode) + "-routing.json")
     markdown_path.write_text(
         formatting.build_markdown_attachment(episode, summary, decision),
         encoding="utf-8",
@@ -848,6 +849,10 @@ def run_single_episode(episode_url: str, dry_run: bool) -> int:
     email_path.write_text(
         formatting.build_email_html(episode, summary, decision), encoding="utf-8"
     )
+    routing_path.write_text(
+        json.dumps(routing_to_dict(decision), ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
     print(
         f"Models: {opencode_config.prompt_builder_model} / "
         f"{opencode_config.summarizer_model}"
@@ -856,6 +861,7 @@ def run_single_episode(episode_url: str, dry_run: bool) -> int:
         f"Routing: {decision.episode_type} / {decision.summary_lens} / "
         f"{decision.recommended_depth}"
     )
+    print(f"Routing decision: {routing_path}")
     print(f"Email preview: {email_path}")
     print(f"Telegram HTML: {html_path}")
     print(f"Markdown transcript: {markdown_path}")
