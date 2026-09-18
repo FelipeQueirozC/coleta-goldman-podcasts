@@ -128,7 +128,7 @@ def build_email_html(episode, summary: str, routing) -> str:
     links += "</p>"
     return (
         '<html><body style="font-family: -apple-system, sans-serif; line-height: 1.5; '
-        'max-width: 720px; margin: auto;">\n'
+        'max-width: 720px; margin: auto; padding: 0 16px;">\n'
         f'<h1 style="font-size: 1.4em;">{escape(episode.title)}</h1>\n'
         f'<p style="color: #666;">{metadata_html(episode, routing)}</p>\n'
         f"{links}\n"

@@ -38,6 +38,7 @@ def test_kinea_style_html_renders_markdown_and_escapes_untrusted_content():
     assert "&lt;script&gt;alert(1)&lt;/script&gt;" in email
     assert "<li>First insight</li>" in email
     assert "max-width: 720px" in email
+    assert "padding: 0 16px" in email
     assert "## Key Takeaway" not in email
     assert "Full transcript &lt;unsafe&gt;." in attachment
     assert "Full Transcript" in attachment
