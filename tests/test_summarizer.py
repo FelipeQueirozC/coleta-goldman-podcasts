@@ -66,6 +66,14 @@ def test_stage_two_rejects_missing_required_headings():
         )
 
 
+def test_relevance_instruction_forbids_code_formatting():
+    instruction = summarizer.SYSTEM_PROMPT_PATH.read_text(encoding="utf-8")
+    relevance = instruction.split("## Relevance", 1)[1]
+
+    assert "`high`" not in relevance
+    assert "no backticks" in relevance.lower()
+
+
 def test_stage_two_failure_saves_raw_output_for_inspection(tmp_path, monkeypatch):
     monkeypatch.setattr(summarizer.tempfile, "gettempdir", lambda: str(tmp_path))
     config = opencode.OpenCodeConfig("key", summarizer_model="deepseek-v4-pro")
