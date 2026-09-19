@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import Callable
@@ -20,6 +21,18 @@ GROQ_MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 Runner = Callable[..., object]
 
 
+def ytdlp_binary() -> str:
+    """Prefer the yt-dlp beside the running interpreter.
+
+    systemd units run with a minimal PATH where `yt-dlp` resolves to the
+    outdated system package. The venv install lands next to python.
+    """
+    candidate = Path(sys.executable).parent / "yt-dlp"
+    if candidate.is_file():
+        return str(candidate)
+    return "yt-dlp"
+
+
 def watch_url(video_id: str) -> str:
     return f"https://www.youtube.com/watch?v={video_id}"
 
@@ -29,7 +42,7 @@ def fetch_upload_date(video_id: str, runner: Runner = subprocess.run) -> str:
     try:
         completed = runner(
             [
-                "yt-dlp",
+                ytdlp_binary(),
                 "--skip-download",
                 "--no-warnings",
                 "--print",
@@ -55,22 +68,29 @@ def download_audio(
     """Download best audio-only stream. Returns the audio file path."""
     work_dir.mkdir(parents=True, exist_ok=True)
     output_template = str(work_dir / "audio.%(ext)s")
-    runner(
-        [
-            "yt-dlp",
-            "-f",
-            "bestaudio[ext=m4a]/bestaudio",
-            "--no-playlist",
-            "--no-warnings",
-            "-o",
-            output_template,
-            watch_url(video_id),
-        ],
-        capture_output=True,
-        text=True,
-        timeout=600,
-        check=True,
-    )
+    try:
+        runner(
+            [
+                ytdlp_binary(),
+                "-f",
+                "bestaudio[ext=m4a]/bestaudio",
+                "--no-playlist",
+                "--no-warnings",
+                "-o",
+                output_template,
+                watch_url(video_id),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=600,
+            check=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        detail = str(getattr(exc, "stderr", "") or "").strip().splitlines()
+        raise RuntimeError(
+            f"yt-dlp download failed for {video_id}: "
+            f"{detail[-1] if detail else exc}"
+        ) from exc
     candidates = sorted(work_dir.glob("audio.*"))
     if not candidates:
         raise RuntimeError(f"yt-dlp produced no audio file for {video_id}")
@@ -113,7 +133,7 @@ def fetch_metadata(video_id: str, runner: Runner = subprocess.run) -> dict:
     try:
         completed = runner(
             [
-                "yt-dlp",
+                ytdlp_binary(),
                 "--skip-download",
                 "--no-warnings",
                 "--dump-single-json",

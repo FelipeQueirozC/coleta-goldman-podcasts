@@ -33,6 +33,55 @@ def test_fetch_upload_date_returns_empty_on_failure():
     assert youtube.fetch_upload_date("30ir9C1Im1M", runner=runner) == ""
 
 
+def test_fetch_metadata_survives_null_output():
+    def runner(cmd, **kwargs):
+        return FakeCompleted(stdout="null\n")
+
+    meta = youtube.fetch_metadata("30ir9C1Im1M", runner=runner)
+
+    assert meta == {"video_id": "30ir9C1Im1M", "title": "", "description": "", "upload_date": ""}
+
+
+def test_ytdlp_prefers_venv_binary_over_system_path(tmp_path, monkeypatch):
+    venv_bin = tmp_path / "venv" / "bin"
+    venv_bin.mkdir(parents=True)
+    binary = venv_bin / "yt-dlp"
+    binary.write_bytes(b"x")
+    monkeypatch.setattr(youtube.sys, "executable", str(venv_bin / "python"))
+    calls = []
+
+    def runner(cmd, **kwargs):
+        calls.append(cmd)
+        return FakeCompleted(stdout="20260918\n")
+
+    youtube.fetch_upload_date("30ir9C1Im1M", runner=runner)
+
+    assert calls[0][0] == str(binary)
+
+
+def test_ytdlp_falls_back_to_path_lookup(tmp_path, monkeypatch):
+    monkeypatch.setattr(youtube.sys, "executable", str(tmp_path / "python"))
+    calls = []
+
+    def runner(cmd, **kwargs):
+        calls.append(cmd)
+        return FakeCompleted(stdout="20260918\n")
+
+    youtube.fetch_upload_date("30ir9C1Im1M", runner=runner)
+
+    assert calls[0][0] == "yt-dlp"
+
+
+def test_download_failure_reports_yt_dlp_stderr():
+    import subprocess
+
+    def runner(cmd, **kwargs):
+        raise subprocess.CalledProcessError(1, cmd, stderr="ERROR: Sign in to confirm\n")
+
+    with pytest.raises(RuntimeError, match="Sign in to confirm"):
+        youtube.download_audio("30ir9C1Im1M", __import__("pathlib").Path("/tmp"), runner=runner)
+
+
 def test_download_audio_uses_bestaudio_single_video(tmp_path):
     calls = []
 
