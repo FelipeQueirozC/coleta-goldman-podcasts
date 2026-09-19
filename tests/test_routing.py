@@ -88,4 +88,4 @@ def test_stage_one_uses_flash_json_mode_and_compact_output_limit():
     assert decision.episode_type == "investor_interview"
     assert calls[0]["model"] == "deepseek-v4.1-flash"
     assert calls[0]["json_mode"] is True
-    assert calls[0]["max_tokens"] == 2500
+    assert calls[0]["max_tokens"] == 5000

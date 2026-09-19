@@ -161,9 +161,10 @@ def build_html_attachment(episode, summary: str, routing) -> str:
     if episode.youtube_url:
         links += f' &middot; <a href="{escape(episode.youtube_url, quote=True)}">YouTube</a>'
     return (
-        '<!doctype html><html><head><meta charset="utf-8"><title>'
-        f"{escape(episode.title)}</title></head>"
-        '<body style="font-family: -apple-system, sans-serif; line-height: 1.5; '
+        '<!doctype html><html><head><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">'
+        f"<title>{escape(episode.title)}</title></head>"
+        '<body style="font-family: -apple-system, sans-serif; font-size: 17px; line-height: 1.5; '
         'max-width: 720px; margin: 2em auto; padding: 0 1em; color: #222;">\n'
         f"<h1>{escape(episode.title)}</h1>\n"
         f'<p style="color: #666;">{metadata_html(episode, routing)}</p>\n'

@@ -42,6 +42,8 @@ def test_kinea_style_html_renders_markdown_and_escapes_untrusted_content():
     assert "## Key Takeaway" not in email
     assert "Full transcript &lt;unsafe&gt;." in attachment
     assert "Full Transcript" in attachment
+    assert 'name="viewport"' in attachment
+    assert "font-size: 17px" in attachment
 
 
 def test_telegram_message_and_all_content_are_english():

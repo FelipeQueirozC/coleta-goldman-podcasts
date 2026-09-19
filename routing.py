@@ -93,7 +93,7 @@ def route_episode(
             messages=[{"role": "user", "content": build_routing_prompt(episode, transcript)}],
             json_mode=True,
             temperature=0.0,
-            max_tokens=2500,
+            max_tokens=5000,
             timeout=300,
         )
     except Exception as exc:
