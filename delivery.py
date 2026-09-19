@@ -15,6 +15,7 @@ import formatting
 SENDER_PREFIXES = {
     "the_markets": "gs.themarkets",
     "exchanges": "gs.exchanges",
+    "views_from_floor": "gs.viewsfromfloor",
 }
 
 

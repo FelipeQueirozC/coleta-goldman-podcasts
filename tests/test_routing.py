@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -52,6 +53,15 @@ def test_wrapped_routing_json_is_parsed_and_bounded():
     assert decision.summary_lens == "investment_process"
     assert len(decision.primary_topics) == 5
     assert "portfolio construction" in decision.large_model_prompt
+
+
+def test_routing_template_covers_trading_desk_briefs():
+    template = (Path(__file__).parent.parent / "prompts" / "build_summary_prompt.txt").read_text(
+        encoding="utf-8"
+    )
+
+    assert "trading_desk_brief" in template
+    assert "desk" in template.lower()
 
 
 def test_stage_one_rejects_malformed_or_oversized_prompt_json():

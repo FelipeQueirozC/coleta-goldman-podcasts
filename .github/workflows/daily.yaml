@@ -36,6 +36,7 @@ jobs:
           RESEND_FROM_DOMAIN: ${{ secrets.RESEND_FROM_DOMAIN }}
           RESEND_TO_EMAIL: ${{ secrets.RESEND_TO_EMAIL }}
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_DELIVERY_CHAT_ID: ${{ secrets.TELEGRAM_DELIVERY_CHAT_ID }}
           TELEGRAM_ERROR_CHAT_ID: ${{ secrets.TELEGRAM_ERROR_CHAT_ID }}
