@@ -24,7 +24,16 @@ The collector uses this order:
 
 1. Valid transcript PDF
 2. Inline transcript on the episode page
-3. Visible failure
+3. YouTube audio transcribed with Groq (`youtube_audio`)
+4. Visible failure
+
+Views From the Floor videos publish no transcript, so they start at step 3.
+The videos have no captions. `yt-dlp` downloads best audio, Groq
+`whisper-large-v3` transcribes it in English.
+
+When a Markets or Exchanges episode falls back to YouTube audio, the
+pipeline sends a Telegram warning to the error channel. Those sources
+must publish page transcripts.
 
 ## Delivery
 

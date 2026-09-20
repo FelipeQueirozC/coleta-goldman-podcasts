@@ -30,7 +30,7 @@ List three to five high-signal ideas from the episode. Prefer ideas with practic
 
 ## Relevance
 
-Use `high`, `medium`, or `low`. Add one sentence explaining the rating.
+Use high, medium, or low as plain text with no backticks or code formatting. Add one sentence explaining the rating.
 
 The Narrative Summary is the primary section. Use paragraphs instead of excessive bullets. Use concise professional English. The episode-specific prompt defines the correct emphasis and depth.
 

@@ -46,6 +46,29 @@ def test_kinea_style_html_renders_markdown_and_escapes_untrusted_content():
     assert "font-size: 17px" in attachment
 
 
+def test_youtube_link_is_omitted_when_it_matches_episode_url():
+    episode, routing = objects()
+    episode.youtube_url = episode.url
+    summary = "## Key Takeaway\n\nContent."
+
+    email = formatting.build_email_html(episode, summary, routing)
+    attachment = formatting.build_html_attachment(episode, summary, routing)
+
+    assert email.count(episode.url) == 1
+    assert attachment.count(episode.url) == 1
+    assert "YouTube" not in email and "YouTube" not in attachment
+
+
+def test_youtube_link_is_kept_when_urls_differ():
+    episode, routing = objects()
+    episode.youtube_url = "https://www.youtube.com/watch?v=abc"
+    summary = "## Key Takeaway\n\nContent."
+
+    email = formatting.build_email_html(episode, summary, routing)
+
+    assert "Watch on YouTube" in email
+
+
 def test_telegram_message_and_all_content_are_english():
     episode, routing = objects()
     summary = "## Key Takeaway\n\nThe central investment conclusion."

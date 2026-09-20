@@ -93,7 +93,8 @@ Use this source order:
 
 1. A valid transcript PDF.
 2. The inline transcript from the episode page.
-3. A visible processing failure.
+3. YouTube audio transcribed with Groq (`youtube_audio`).
+4. A visible processing failure.
 
 A PDF is valid only when the response succeeds and starts with `%PDF-`.
 
@@ -101,7 +102,13 @@ The inline transcript extractor must locate the Goldman transcript label and its
 
 The HTML transcript must preserve speaker order and paragraph boundaries.
 
-Do not add audio transcription. Goldman already supplies transcript text.
+Views From the Floor videos publish no transcript, so they start at step 3.
+The videos have no captions. `yt-dlp` downloads best audio-only `m4a`,
+Groq `whisper-large-v3` transcribes it with `language="en"`.
+
+When a Markets or Exchanges episode reaches step 3, the pipeline sends a
+Telegram warning to the error channel after successful delivery. Those
+sources must publish page transcripts.
 
 The episode `What Is the Outlook for Diesel and Gasoline Supplies?` is the live fallback case.
 

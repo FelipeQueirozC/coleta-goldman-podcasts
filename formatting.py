@@ -121,9 +121,13 @@ def build_email_text(episode, summary: str, routing) -> str:
     )
 
 
+def youtube_link_differs(episode) -> bool:
+    return bool(episode.youtube_url) and episode.youtube_url != episode.url
+
+
 def build_email_html(episode, summary: str, routing) -> str:
     links = f'<p><a href="{escape(episode.url, quote=True)}">Open episode page</a>'
-    if episode.youtube_url:
+    if youtube_link_differs(episode):
         links += f' &middot; <a href="{escape(episode.youtube_url, quote=True)}">Watch on YouTube</a>'
     links += "</p>"
     return (
@@ -158,7 +162,7 @@ def build_markdown_attachment(episode, summary: str, routing) -> str:
 
 def build_html_attachment(episode, summary: str, routing) -> str:
     links = f'<a href="{escape(episode.url, quote=True)}">Episode page</a>'
-    if episode.youtube_url:
+    if youtube_link_differs(episode):
         links += f' &middot; <a href="{escape(episode.youtube_url, quote=True)}">YouTube</a>'
     return (
         '<!doctype html><html><head><meta charset="utf-8">'

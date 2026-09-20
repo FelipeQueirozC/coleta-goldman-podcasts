@@ -22,6 +22,7 @@ import formatting
 import opencode
 import routing as routing_module
 import summarizer as summarizer_module
+import youtube as youtube_adapter
 
 DEFAULT_STATE_PATH = Path(__file__).with_name("sent_documents.json")
 OUTPUT_DIR = Path(__file__).parent / "output"
@@ -49,6 +50,13 @@ SOURCES = [
         "listing_url": "https://www.goldmansachs.com/insights/goldman-sachs-exchanges",
         "path_prefix": "/insights/goldman-sachs-exchanges/",
         "pdf_prefix": "/pdfs/insights/goldman-sachs-exchanges/"
+    },
+    {
+        "id": "views_from_floor",
+        "name": "GS Views From the Floor",
+        "sender_prefix": "gs.viewsfromfloor",
+        "listing_url": "https://www.goldmansachs.com/what-we-do/ficc-and-equities",
+        "kind": "youtube"
     }
 ]
 
@@ -70,6 +78,7 @@ class Episode:
     description: str = ""
     date_iso: str = ""
     youtube_url: str = ""
+    eyebrow: str = ""
     pdf_url: str = ""
     transcript_series: str = ""
     transcript_title: str = ""
@@ -211,6 +220,40 @@ def notify_error_once(
     return True
 
 
+PODCAST_SOURCE_IDS = ("the_markets", "exchanges")
+
+
+def needs_transcript_fallback_warning(episode: Episode) -> bool:
+    """Podcast episodes must publish page transcripts.
+
+    A YouTube-audio transcript for these sources signals a missing page
+    transcript, so the operator gets a Telegram warning.
+    """
+    return (
+        episode.source_id in PODCAST_SOURCE_IDS
+        and episode.transcript_source == "youtube_audio"
+    )
+
+
+def warn_transcript_fallback(state_path: Path, episode: Episode, **notify_kwargs) -> bool:
+    if not needs_transcript_fallback_warning(episode):
+        return False
+    try:
+        return notify_error_once(
+            state_path,
+            "No transcript PDF or inline transcript on the episode page; "
+            "summary built from YouTube audio transcription.",
+            f"{episode.source_name} / {episode.slug} / transcript-fallback",
+            **notify_kwargs,
+        )
+    except Exception as exc:
+        print(
+            f"  -> ERROR sending fallback warning: {exc.__class__.__name__}",
+            file=sys.stderr,
+        )
+        return False
+
+
 def fetch_dynamic_html(url: str) -> str:
     print(f"Opening the podcast listing page: {url}")
     with sync_playwright() as p:
@@ -238,7 +281,123 @@ def discover_slugs(html: str, path_prefix: str) -> list[str]:
                 slugs.add(slug)
     return sorted(slugs)
 
+CARD_VALUE_RES = {
+    name: re.compile(r'"' + name + r'":"((?:\\.|[^"\\])*)"')
+    for name in ("cardEyeBrow", "cardTitle", "cardDescription", "linkDestination")
+}
+YOUTUBE_VIDEO_ID_RE = re.compile(r"(?:[?&]v=|youtu\.be/)([A-Za-z0-9_-]{11})")
+
+
+def _unquote_card_value(raw: str) -> str:
+    try:
+        return json.loads(f'"{raw}"')
+    except json.JSONDecodeError:
+        return raw
+
+
+def strip_card_html(value: str) -> str:
+    text = BeautifulSoup(value, "html.parser").get_text(" ", strip=True)
+    return WHITESPACE_PATTERN.sub(" ", text).strip()
+
+
+def discover_youtube_cards(html: str) -> list[dict]:
+    """Extract Goldman video cards (title, eyebrow, description, video id).
+
+    Cards live in embedded page JSON. Splitting on the eyebrow marker keeps
+    each card's fields paired. Business-unit cards have no YouTube link and
+    are skipped. Cards are deduped by video id, preserving page order.
+    """
+    cards = []
+    seen = set()
+    for segment in html.split('"cardEyeBrow":"')[1:]:
+        eyebrow_match = re.match(r'((?:\\.|[^"\\])*)"', segment)
+        eyebrow = (
+            _unquote_card_value(eyebrow_match.group(1)).strip().strip('"')
+            if eyebrow_match
+            else ""
+        )
+        if not eyebrow:
+            continue
+        fields = {}
+        for name, pattern in CARD_VALUE_RES.items():
+            match = pattern.search(segment)
+            fields[name] = _unquote_card_value(match.group(1)) if match else ""
+        link = fields["linkDestination"]
+        video_match = YOUTUBE_VIDEO_ID_RE.search(link)
+        title = WHITESPACE_PATTERN.sub(" ", fields["cardTitle"].strip().strip('"')).strip()
+        if not video_match or not title:
+            continue
+        video_id = video_match.group(1)
+        if video_id in seen:
+            continue
+        seen.add(video_id)
+        cards.append(
+            {
+                "video_id": video_id,
+                "title": title,
+                "eyebrow": eyebrow,
+                "description": strip_card_html(fields["cardDescription"]),
+            }
+        )
+    return cards
+
+
+def views_source() -> dict:
+    return next(source for source in SOURCES if source["id"] == "views_from_floor")
+
+
+def collect_youtube_episode(
+    source: dict,
+    card: dict,
+    upload_date_fetcher=None,
+    transcriber=None,
+    dry_run: bool = False,
+) -> Episode:
+    video_id = card["video_id"]
+    print(f"  -> Collecting YouTube video: {youtube_adapter.watch_url(video_id)}")
+    if dry_run:
+        return Episode(
+            source_id=source["id"],
+            source_name=source["name"],
+            slug=video_id,
+            url=youtube_adapter.watch_url(video_id),
+            title=card.get("title") or video_id,
+            description=card.get("description", ""),
+            date_iso=card.get("date_iso", ""),
+            youtube_url=youtube_adapter.watch_url(video_id),
+            eyebrow=card.get("eyebrow", ""),
+            transcript_text="",
+            transcript_source="",
+        )
+    fetch_date = upload_date_fetcher or youtube_adapter.fetch_upload_date
+    transcribe = transcriber or youtube_adapter.transcribe_youtube_audio
+    date_iso = card.get("date_iso") or fetch_date(video_id)
+    transcript_text = transcribe(video_id)
+    if not transcript_text.strip():
+        raise EpisodeStageError(
+            "transcript collection", "YouTube transcription returned empty text"
+        )
+    transcript_text = reflow_transcript_text(strip_transcript_header(transcript_text))
+    return Episode(
+        source_id=source["id"],
+        source_name=source["name"],
+        slug=video_id,
+        url=youtube_adapter.watch_url(video_id),
+        title=card.get("title") or video_id,
+        description=card.get("description", ""),
+        date_iso=date_iso,
+        youtube_url=youtube_adapter.watch_url(video_id),
+        eyebrow=card.get("eyebrow", ""),
+        transcript_people=extract_speaker_names(transcript_text),
+        transcript_text=transcript_text,
+        transcript_source="youtube_audio",
+    )
+
+
 def source_and_slug_from_episode_url(episode_url: str) -> tuple[dict, str]:
+    youtube_match = YOUTUBE_VIDEO_ID_RE.search(episode_url or "")
+    if youtube_match:
+        return views_source(), youtube_match.group(1)
     parsed = urlparse(urljoin(BASE_URL, episode_url))
     path = parsed.path.rstrip("/")
 
@@ -430,7 +589,19 @@ def extract_inline_transcript(page_html: str) -> str:
     return "\n\n".join(paragraph for paragraph in paragraphs if paragraph)
 
 
-def extract_transcript(pdf_bytes: bytes, page_html: str) -> tuple[str, str]:
+def default_youtube_fetcher(youtube_url: str) -> str:
+    match = YOUTUBE_VIDEO_ID_RE.search(youtube_url or "")
+    if not match:
+        return ""
+    return youtube_adapter.transcribe_youtube_audio(match.group(1))
+
+
+def extract_transcript(
+    pdf_bytes: bytes,
+    page_html: str,
+    youtube_url: str = "",
+    youtube_fetcher=None,
+) -> tuple[str, str]:
     if pdf_bytes:
         text = extract_pdf_text(pdf_bytes)
         if text:
@@ -438,6 +609,11 @@ def extract_transcript(pdf_bytes: bytes, page_html: str) -> tuple[str, str]:
     inline_text = extract_inline_transcript(page_html)
     if inline_text:
         return inline_text, "inline_html"
+    if youtube_url:
+        fetcher = youtube_fetcher or default_youtube_fetcher
+        youtube_text = fetcher(youtube_url)
+        if youtube_text:
+            return youtube_text, "youtube_audio"
     return "", "missing"
 
 
@@ -590,7 +766,9 @@ def collect_episode(session: requests.Session, source: dict, slug: str) -> tuple
         page_pdf_urls,
         episode_url,
     )
-    transcript_text, transcript_source = extract_transcript(pdf_bytes, ep_html)
+    transcript_text, transcript_source = extract_transcript(
+        pdf_bytes, ep_html, meta["youtube_url"]
+    )
     if transcript_source == "inline_html":
         print("     Using the inline episode transcript because no valid PDF was found.")
     elif transcript_source == "missing":
@@ -822,11 +1000,23 @@ def run_single_episode(episode_url: str, dry_run: bool) -> int:
     load_environment()
     source, slug = source_and_slug_from_episode_url(episode_url)
     print(f"Previewing one episode from {source['name']}: {slug}")
-    with requests.Session() as session:
-        session.headers.update(
-            {"User-Agent": "Mozilla/5.0 (compatible; GoldmanExtractor/1.0)"}
+    if source.get("kind") == "youtube":
+        meta = youtube_adapter.fetch_metadata(slug)
+        episode = collect_youtube_episode(
+            source,
+            {
+                "video_id": slug,
+                "title": meta["title"] or slug,
+                "eyebrow": "",
+                "description": meta["description"],
+            },
         )
-        episode, _ = collect_episode(session, source, slug)
+    else:
+        with requests.Session() as session:
+            session.headers.update(
+                {"User-Agent": "Mozilla/5.0 (compatible; GoldmanExtractor/1.0)"}
+            )
+            episode, _ = collect_episode(session, source, slug)
     if dry_run:
         print("Dry run complete. No models, files, deliveries, or state updates were used.")
         return 0
@@ -886,20 +1076,41 @@ def mark_without_delivery(state: dict, episode: Episode, status: str) -> None:
     }
 
 
+def migration_groups(
+    pending: list[Episode],
+) -> list[tuple[str, list[Episode]]]:
+    """Group pending episodes for catch-up selection.
+
+    Views From the Floor groups by video series (eyebrow) so each series
+    keeps its newest video. Podcast sources form a single group each.
+    """
+    groups = []
+    for source in SOURCES:
+        source_pending = [ep for ep in pending if ep.source_id == source["id"]]
+        if not source_pending:
+            continue
+        if source["id"] == "views_from_floor":
+            eyebrows: dict[str, list[Episode]] = {}
+            for episode in source_pending:
+                eyebrows.setdefault(episode.eyebrow or "", []).append(episode)
+            for eyebrow in sorted(eyebrows):
+                groups.append((source["id"], eyebrows[eyebrow]))
+        else:
+            groups.append((source["id"], source_pending))
+    return groups
+
+
 def select_migration_pending(
     pending: list[Episode],
 ) -> tuple[list[Episode], dict[str, list[Episode]]]:
     selected = []
     skipped_by_source: dict[str, list[Episode]] = {}
-    for source in SOURCES:
-        source_pending = [ep for ep in pending if ep.source_id == source["id"]]
-        if not source_pending:
-            continue
-        newest = max(source_pending, key=lambda ep: (ep.date_iso, ep.slug))
+    for source_id, group in migration_groups(pending):
+        newest = max(group, key=lambda ep: (ep.date_iso, ep.slug))
         selected.append(newest)
-        skipped_by_source[source["id"]] = [
-            episode for episode in source_pending if episode.slug != newest.slug
-        ]
+        skipped_by_source.setdefault(source_id, []).extend(
+            episode for episode in group if episode.slug != newest.slug
+        )
     return selected, skipped_by_source
 
 
@@ -918,7 +1129,15 @@ def run(init_only: bool, dry_run: bool, migration_catch_up: bool = False) -> int
             print(f"\nChecking podcast: {source['name']}")
             try:
                 listing_html = fetch_dynamic_html(source["listing_url"])
-                slugs = discover_slugs(listing_html, source["path_prefix"])
+                youtube_cards = None
+                if source.get("kind") == "youtube":
+                    youtube_cards = {
+                        card["video_id"]: card
+                        for card in discover_youtube_cards(listing_html)
+                    }
+                    slugs = sorted(youtube_cards)
+                else:
+                    slugs = discover_slugs(listing_html, source["path_prefix"])
             except Exception as exc:
                 had_errors = True
                 print(f"  -> ERROR reading listing for {source['name']}: {exc}", file=sys.stderr)
@@ -941,7 +1160,12 @@ def run(init_only: bool, dry_run: bool, migration_catch_up: bool = False) -> int
                     continue
                 print(f"  -> New episode found: {slug}")
                 try:
-                    episode, _ = collect_episode(session, source, slug)
+                    if youtube_cards is not None:
+                        episode = collect_youtube_episode(
+                            source, youtube_cards[slug], dry_run=dry_run
+                        )
+                    else:
+                        episode, _ = collect_episode(session, source, slug)
                     pending.append(episode)
                     if dry_run:
                         print(f"     Dry run: would process '{episode.title}'.")
@@ -1000,6 +1224,7 @@ def run(init_only: bool, dry_run: bool, migration_catch_up: bool = False) -> int
                 delivery_config,
             )
             print(f"  -> Sent: {episode.title}")
+            warn_transcript_fallback(state_path, episode)
             for skipped in skipped_by_source.get(episode.source_id, []):
                 mark_without_delivery(state, skipped, "skipped-migration")
             save_state(state, state_path)
