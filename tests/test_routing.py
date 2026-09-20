@@ -105,8 +105,7 @@ def test_stage_one_retries_once_with_repair_demand_on_invalid_json():
     assert "ONLY the JSON object" in calls[1]["messages"][-1]["content"]
 
 
-def test_stage_one_failure_saves_raw_response_for_inspection(tmp_path, monkeypatch):
-    monkeypatch.setattr(routing.tempfile, "gettempdir", lambda: str(tmp_path))
+def test_stage_one_failure_saves_raw_response_for_inspection(tmp_path):
     raw = "{\nnot json}\n"
     config = opencode.OpenCodeConfig("key", prompt_builder_model="deepseek-v4.1-flash")
 

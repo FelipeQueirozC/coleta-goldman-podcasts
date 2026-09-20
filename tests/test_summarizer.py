@@ -74,8 +74,7 @@ def test_relevance_instruction_forbids_code_formatting():
     assert "no backticks" in relevance.lower()
 
 
-def test_stage_two_failure_saves_raw_output_for_inspection(tmp_path, monkeypatch):
-    monkeypatch.setattr(summarizer.tempfile, "gettempdir", lambda: str(tmp_path))
+def test_stage_two_failure_saves_raw_output_for_inspection(tmp_path):
     config = opencode.OpenCodeConfig("key", summarizer_model="deepseek-v4-pro")
     routing = SimpleNamespace(large_model_prompt="Focus on markets.")
     raw = "## Key Takeaway\n\nOnly one section"
