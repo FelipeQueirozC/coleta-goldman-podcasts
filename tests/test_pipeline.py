@@ -192,6 +192,20 @@ def test_migration_summary_reports_sent_skipped_failed_counts(tmp_path, monkeypa
     )
 
 
+def test_migration_summary_counts_shared_source_skips_once(tmp_path, monkeypatch, capsys):
+    run_with_fakes(monkeypatch, tmp_path, slugs=("old", "new"))
+
+    def fake_select(pending):
+        markets = [ep for ep in pending if ep.source_id == "the_markets"]
+        return markets, {"the_markets": markets[:1], "exchanges": []}
+
+    monkeypatch.setattr(main, "select_migration_pending", fake_select)
+    main.run(False, False, migration_catch_up=True)
+
+    out = capsys.readouterr().out
+    assert "2 sent, 1 skipped, 0 failed" in out
+
+
 def test_error_notifications_name_migration_run_mode(tmp_path, monkeypatch):
     notifications = run_with_fakes(
         monkeypatch,

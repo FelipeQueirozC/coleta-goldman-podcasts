@@ -1225,6 +1225,7 @@ def run(init_only: bool, dry_run: bool, migration_catch_up: bool = False) -> int
     sent_count = 0
     failed_count = 0
     skipped_count = 0
+    marked_skipped: set[tuple[str, str]] = set()
     for episode in sorted(pending, key=lambda ep: (ep.date_iso, ep.source_id, ep.slug)):
         stage = "Stage 1"
         try:
@@ -1243,6 +1244,10 @@ def run(init_only: bool, dry_run: bool, migration_catch_up: bool = False) -> int
             sent_count += 1
             warn_transcript_fallback(state_path, episode, run_mode=run_mode)
             for skipped in skipped_by_source.get(episode.source_id, []):
+                skip_key = (skipped.source_id, skipped.slug)
+                if skip_key in marked_skipped:
+                    continue
+                marked_skipped.add(skip_key)
                 mark_without_delivery(state, skipped, "skipped-migration")
                 skipped_count += 1
             save_state(state, state_path)
