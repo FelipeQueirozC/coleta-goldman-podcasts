@@ -235,15 +235,23 @@ def needs_transcript_fallback_warning(episode: Episode) -> bool:
     )
 
 
-def warn_transcript_fallback(state_path: Path, episode: Episode, **notify_kwargs) -> bool:
+def warn_transcript_fallback(
+    state_path: Path,
+    episode: Episode,
+    run_mode: str = "",
+    **notify_kwargs,
+) -> bool:
     if not needs_transcript_fallback_warning(episode):
         return False
+    context = f"{episode.source_name} / {episode.slug} / transcript-fallback"
+    if run_mode:
+        context = f"{context} / {run_mode}"
     try:
         return notify_error_once(
             state_path,
             "No transcript PDF or inline transcript on the episode page; "
             "summary built from YouTube audio transcription.",
-            f"{episode.source_name} / {episode.slug} / transcript-fallback",
+            context,
             **notify_kwargs,
         )
     except Exception as exc:
@@ -1120,6 +1128,8 @@ def run(init_only: bool, dry_run: bool, migration_catch_up: bool = False) -> int
     state = load_state(state_path)
     pending: list[Episode] = []
     had_errors = False
+    run_mode = "migration catch-up" if migration_catch_up else "daily"
+    collection_errors = 0
 
     with requests.Session() as session:
         session.headers.update(
@@ -1144,7 +1154,7 @@ def run(init_only: bool, dry_run: bool, migration_catch_up: bool = False) -> int
                 if not dry_run:
                     try:
                         notify_error_once(
-                            state_path, exc, f"{source['name']} / discovery"
+                            state_path, exc, f"{source['name']} / discovery / {run_mode}"
                         )
                     except Exception as notify_exc:
                         print(
@@ -1171,6 +1181,7 @@ def run(init_only: bool, dry_run: bool, migration_catch_up: bool = False) -> int
                         print(f"     Dry run: would process '{episode.title}'.")
                 except Exception as exc:
                     had_errors = True
+                    collection_errors += 1
                     print(
                         f"  -> ERROR collecting {source['name']} / {slug}: {exc}",
                         file=sys.stderr,
@@ -1178,7 +1189,9 @@ def run(init_only: bool, dry_run: bool, migration_catch_up: bool = False) -> int
                     if not dry_run:
                         try:
                             notify_error_once(
-                                state_path, exc, f"{source['name']} / {slug} / collection"
+                                state_path,
+                                exc,
+                                f"{source['name']} / {slug} / collection / {run_mode}",
                             )
                         except Exception as notify_exc:
                             print(
@@ -1209,6 +1222,9 @@ def run(init_only: bool, dry_run: bool, migration_catch_up: bool = False) -> int
         f"OpenCode models: {opencode_config.prompt_builder_model} / "
         f"{opencode_config.summarizer_model}"
     )
+    sent_count = 0
+    failed_count = 0
+    skipped_count = 0
     for episode in sorted(pending, key=lambda ep: (ep.date_iso, ep.source_id, ep.slug)):
         stage = "Stage 1"
         try:
@@ -1224,12 +1240,15 @@ def run(init_only: bool, dry_run: bool, migration_catch_up: bool = False) -> int
                 delivery_config,
             )
             print(f"  -> Sent: {episode.title}")
-            warn_transcript_fallback(state_path, episode)
+            sent_count += 1
+            warn_transcript_fallback(state_path, episode, run_mode=run_mode)
             for skipped in skipped_by_source.get(episode.source_id, []):
                 mark_without_delivery(state, skipped, "skipped-migration")
+                skipped_count += 1
             save_state(state, state_path)
         except Exception as exc:
             had_errors = True
+            failed_count += 1
             if isinstance(exc, EpisodeStageError):
                 stage = exc.stage
             print(
@@ -1240,7 +1259,7 @@ def run(init_only: bool, dry_run: bool, migration_catch_up: bool = False) -> int
                 notify_error_once(
                     state_path,
                     exc,
-                    f"{episode.source_name} / {episode.slug} / {stage}",
+                    f"{episode.source_name} / {episode.slug} / {stage} / {run_mode}",
                 )
             except Exception as notify_exc:
                 print(
@@ -1248,6 +1267,12 @@ def run(init_only: bool, dry_run: bool, migration_catch_up: bool = False) -> int
                     file=sys.stderr,
                 )
 
+    if migration_catch_up:
+        print(
+            f"\nMigration catch-up complete: {sent_count} sent, "
+            f"{skipped_count} skipped, {failed_count} failed, "
+            f"{collection_errors} collection errors."
+        )
     if had_errors:
         print("\nFinished with errors. Check the messages above for details.", file=sys.stderr)
         return 1
