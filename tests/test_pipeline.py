@@ -107,6 +107,7 @@ def run_with_fakes(monkeypatch, tmp_path, slugs=("old", "new"), collect_failures
     monkeypatch.setattr(main, "fetch_dynamic_html", lambda _url: "<html></html>")
     monkeypatch.setattr(main, "discover_slugs", lambda _html, _prefix: list(slugs))
     monkeypatch.setattr(main, "discover_youtube_cards", lambda _html: [])
+    monkeypatch.setattr(main, "discover_views_cards", lambda _html, _source: [])
 
     def collect(_session, source, slug):
         if slug in collect_failures:
