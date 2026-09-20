@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import os
 from pathlib import Path
 import re
+import tempfile
+import time
 from typing import Callable
 
 from opencode import OpenCodeConfig, chat_completion
@@ -23,6 +26,21 @@ MAX_LIST_ITEMS = 5
 
 class Stage1Error(RuntimeError):
     pass
+
+
+REPAIR_MESSAGE = (
+    "Your previous response was not a parseable JSON object. "
+    "Return ONLY the JSON object now: no preamble, no explanation, no code fences."
+)
+JSON_STRUCTURE_MARKERS = ("invalid JSON", "no JSON object")
+
+
+def save_failed_stage_one_response(raw_response: str) -> Path:
+    raw_path = Path(tempfile.gettempdir()) / (
+        "goldman-stage1-failed-" f"{os.getpid()}-{int(time.time())}.json"
+    )
+    raw_path.write_text(raw_response, encoding="utf-8")
+    return raw_path
 
 
 @dataclass(frozen=True)
@@ -86,11 +104,12 @@ def route_episode(
     *,
     caller: Callable = chat_completion,
 ) -> RoutingDecision:
+    messages = [{"role": "user", "content": build_routing_prompt(episode, transcript)}]
     try:
         response = caller(
             config,
             model=config.prompt_builder_model,
-            messages=[{"role": "user", "content": build_routing_prompt(episode, transcript)}],
+            messages=messages,
             json_mode=True,
             temperature=0.0,
             max_tokens=5000,
@@ -98,7 +117,24 @@ def route_episode(
         )
     except Exception as exc:
         raise Stage1Error(f"Stage 1 model call failed: {exc}") from exc
-    return parse_routing_json(response)
+    try:
+        return parse_routing_json(response)
+    except Stage1Error as exc:
+        if not any(marker in str(exc) for marker in JSON_STRUCTURE_MARKERS):
+            raise
+    try:
+        retry = caller(
+            config,
+            model=config.prompt_builder_model,
+            messages=messages + [{"role": "user", "content": REPAIR_MESSAGE}],
+            json_mode=True,
+            temperature=0.0,
+            max_tokens=5000,
+            timeout=300,
+        )
+    except Exception as exc:
+        raise Stage1Error(f"Stage 1 model call failed: {exc}") from exc
+    return parse_routing_json(retry)
 
 
 def parse_routing_json(raw_response: str) -> RoutingDecision:
@@ -110,12 +146,18 @@ def parse_routing_json(raw_response: str) -> RoutingDecision:
             text = text[:-3]
     start, end = text.find("{"), text.rfind("}")
     if start < 0 or end <= start:
-        raise Stage1Error("Stage 1 response contains no JSON object")
+        raw_path = save_failed_stage_one_response(raw_response)
+        raise Stage1Error(
+            "Stage 1 response contains no JSON object. "
+            f"Raw response saved to {raw_path}"
+        )
     try:
         data = json.loads(text[start : end + 1])
     except json.JSONDecodeError as exc:
+        raw_path = save_failed_stage_one_response(raw_response)
         raise Stage1Error(
-            f"Stage 1 returned invalid JSON at line {exc.lineno}, column {exc.colno}"
+            f"Stage 1 returned invalid JSON at line {exc.lineno}, column {exc.colno}. "
+            f"Raw response saved to {raw_path}"
         ) from exc
     if not isinstance(data, dict):
         raise Stage1Error("Stage 1 JSON must be an object")
