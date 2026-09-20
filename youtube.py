@@ -163,6 +163,37 @@ def transcribe_audio_file(audio_path: Path, api_key: str) -> str:
     return text
 
 
+PLAYLIST_LINE_RE = re.compile(r"^([A-Za-z0-9_-]{11})\s*\|\s*(.+?)\s*$")
+
+
+def list_playlist_videos(playlist_id: str, runner: Runner = subprocess.run) -> list[dict]:
+    """List video ids and titles without downloading (FICC page lags behind)."""
+    try:
+        completed = runner(
+            [
+                ytdlp_binary(),
+                "--skip-download",
+                "--flat-playlist",
+                "--no-warnings",
+                "--print",
+                "%(id)s | %(title)s",
+                f"https://www.youtube.com/playlist?list={playlist_id}",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+    except Exception as exc:
+        print(f"     Warning: could not list playlist {playlist_id}: {exc}")
+        return []
+    items = []
+    for line in str(getattr(completed, "stdout", "") or "").splitlines():
+        match = PLAYLIST_LINE_RE.match(line)
+        if match:
+            items.append({"video_id": match.group(1), "title": match.group(2)})
+    return items
+
+
 def fetch_metadata(video_id: str, runner: Runner = subprocess.run) -> dict:
     """Return title, description, and upload date without downloading."""
     meta = {"video_id": video_id, "title": "", "description": "", "upload_date": ""}

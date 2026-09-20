@@ -39,6 +39,26 @@ def test_collect_youtube_episode_uses_card_metadata_and_groq_transcript():
     assert "Markets rallied" in episode.transcript_text
 
 
+def test_discover_views_cards_unions_page_and_playlists(monkeypatch):
+    import youtube as youtube_adapter
+
+    def fake_list(playlist_id, runner=None):
+        if playlist_id == "PLIyiGQywEp65E-tanAHdVfVeEgMiY1jT2":
+            return [{"video_id": "JCbDQh2GokQ", "title": "Playlist Title"}]
+        return [{"video_id": "jXcrNaMbwgk", "title": "Macro Highlight"}]
+
+    monkeypatch.setattr(youtube_adapter, "list_playlist_videos", fake_list)
+    monkeypatch.setattr(
+        main, "discover_youtube_cards", lambda _html: [{"video_id": "JCbDQh2GokQ", "title": "Page Title", "eyebrow": "The Breaks of the Game", "description": "Desc."}]
+    )
+
+    cards = main.discover_views_cards("<html></html>", youtube_source())
+    by_id = {card["video_id"]: card for card in cards}
+
+    assert by_id["JCbDQh2GokQ"]["title"] == "Page Title"
+    assert by_id["jXcrNaMbwgk"]["eyebrow"] == "The Macro Call"
+
+
 def test_dry_run_collection_skips_youtube_download_and_transcription():
     card = {
         "video_id": "30ir9C1Im1M",
@@ -96,6 +116,34 @@ def test_views_email_uses_approved_sender(tmp_path):
     payload = build_email_payload(episode, "## Key Takeaway\n\nText", routing, config, attachment)
 
     assert payload["from"] == "gs.viewsfromfloor@bot.qecapital.com.br"
+
+
+def test_merge_playlist_cards_prefers_page_metadata():
+    page = [
+        {
+            "video_id": "vH16LrVAoBc",
+            "title": "Page Title",
+            "eyebrow": "The Breaks of the Game",
+            "description": "Page description.",
+        }
+    ]
+    playlist = [
+        {"video_id": "vH16LrVAoBc", "title": "YouTube Title"},
+        {"video_id": "JCbDQh2GokQ", "title": "Can Stocks Rally With a Hawkish Fed?"},
+    ]
+
+    merged = main.merge_playlist_cards(page, playlist, "The Breaks of the Game")
+    by_id = {card["video_id"]: card for card in merged}
+
+    assert by_id["vH16LrVAoBc"]["title"] == "Page Title"
+    assert by_id["vH16LrVAoBc"]["description"] == "Page description."
+    assert by_id["JCbDQh2GokQ"] == {
+        "video_id": "JCbDQh2GokQ",
+        "title": "Can Stocks Rally With a Hawkish Fed?",
+        "eyebrow": "The Breaks of the Game",
+        "description": "",
+    }
+    assert [card["video_id"] for card in merged] == ["vH16LrVAoBc", "JCbDQh2GokQ"]
 
 
 def test_youtube_watch_url_routes_to_views_source():

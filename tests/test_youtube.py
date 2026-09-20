@@ -72,6 +72,31 @@ def test_ytdlp_falls_back_to_path_lookup(tmp_path, monkeypatch):
     assert calls[0][0] == "yt-dlp"
 
 
+def test_list_playlist_videos_parses_id_and_title():
+    def runner(cmd, **kwargs):
+        assert "--flat-playlist" in cmd
+        assert "PLIyiGQywEp65E-tanAHdVfVeEgMiY1jT2" in cmd[-1]
+        return FakeCompleted(
+            stdout="JCbDQh2GokQ | Can Stocks Rally With a Hawkish Fed?\n"
+            "vH16LrVAoBc | Can Markets Withstand AI Risks?\n"
+            "\n"
+        )
+
+    items = youtube.list_playlist_videos("PLIyiGQywEp65E-tanAHdVfVeEgMiY1jT2", runner=runner)
+
+    assert items == [
+        {"video_id": "JCbDQh2GokQ", "title": "Can Stocks Rally With a Hawkish Fed?"},
+        {"video_id": "vH16LrVAoBc", "title": "Can Markets Withstand AI Risks?"},
+    ]
+
+
+def test_list_playlist_videos_returns_empty_on_failure():
+    def runner(cmd, **kwargs):
+        raise RuntimeError("no network")
+
+    assert youtube.list_playlist_videos("BAD", runner=runner) == []
+
+
 def test_download_failure_reports_yt_dlp_stderr():
     import subprocess
 

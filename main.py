@@ -56,7 +56,14 @@ SOURCES = [
         "name": "GS Views From the Floor",
         "sender_prefix": "gs.viewsfromfloor",
         "listing_url": "https://www.goldmansachs.com/what-we-do/ficc-and-equities",
-        "kind": "youtube"
+        "kind": "youtube",
+        "playlists": [
+            {
+                "id": "PLIyiGQywEp65E-tanAHdVfVeEgMiY1jT2",
+                "eyebrow": "The Breaks of the Game",
+            },
+            {"id": "PLNRnpoa435Jc", "eyebrow": "The Macro Call"},
+        ],
     }
 ]
 
@@ -352,6 +359,43 @@ def discover_youtube_cards(html: str) -> list[dict]:
 
 def views_source() -> dict:
     return next(source for source in SOURCES if source["id"] == "views_from_floor")
+
+
+def merge_playlist_cards(
+    page_cards: list[dict], playlist_items: list[dict], eyebrow: str
+) -> list[dict]:
+    """Union page cards with fresher playlist items.
+
+    The FICC page lags behind YouTube, so playlist-only videos are appended
+    with the playlist series as eyebrow. Page cards win on conflict because
+    they carry descriptions.
+    """
+    merged = list(page_cards)
+    known = {card["video_id"] for card in merged}
+    for item in playlist_items:
+        if item["video_id"] in known:
+            continue
+        known.add(item["video_id"])
+        merged.append(
+            {
+                "video_id": item["video_id"],
+                "title": item["title"],
+                "eyebrow": eyebrow,
+                "description": "",
+            }
+        )
+    return merged
+
+
+def discover_views_cards(listing_html: str, source: dict) -> list[dict]:
+    cards = discover_youtube_cards(listing_html)
+    for playlist in source.get("playlists", []):
+        items = youtube_adapter.list_playlist_videos(playlist["id"])
+        if items:
+            cards = merge_playlist_cards(cards, items, playlist["eyebrow"])
+        else:
+            print(f"     Warning: playlist {playlist['id']} returned no videos")
+    return cards
 
 
 def collect_youtube_episode(
@@ -1143,7 +1187,7 @@ def run(init_only: bool, dry_run: bool, migration_catch_up: bool = False) -> int
                 if source.get("kind") == "youtube":
                     youtube_cards = {
                         card["video_id"]: card
-                        for card in discover_youtube_cards(listing_html)
+                        for card in discover_views_cards(listing_html, source)
                     }
                     slugs = sorted(youtube_cards)
                 else:
