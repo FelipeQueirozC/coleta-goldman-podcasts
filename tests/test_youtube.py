@@ -82,6 +82,59 @@ def test_download_failure_reports_yt_dlp_stderr():
         youtube.download_audio("30ir9C1Im1M", __import__("pathlib").Path("/tmp"), runner=runner)
 
 
+def test_download_retries_transient_403_then_succeeds(tmp_path, monkeypatch):
+    import subprocess
+    from pathlib import Path
+
+    monkeypatch.setattr(youtube, "YOUTUBE_RETRY_DELAYS", (0, 0))
+    calls = []
+
+    def runner(cmd, **kwargs):
+        calls.append(cmd)
+        if len(calls) < 3:
+            raise subprocess.CalledProcessError(
+                1, cmd, stderr="ERROR: unable to download video data: HTTP Error 403: Forbidden\n"
+            )
+        target = tmp_path / "audio.m4a"
+        target.write_bytes(b"fake-audio")
+        return FakeCompleted()
+
+    path = youtube.download_audio("30ir9C1Im1M", tmp_path, runner=runner)
+
+    assert path == tmp_path / "audio.m4a"
+    assert len(calls) == 3
+
+
+def test_download_does_not_retry_fatal_errors(tmp_path, monkeypatch):
+    import subprocess
+
+    monkeypatch.setattr(youtube, "YOUTUBE_RETRY_DELAYS", (0, 0))
+    calls = []
+
+    def runner(cmd, **kwargs):
+        calls.append(cmd)
+        raise subprocess.CalledProcessError(1, cmd, stderr="ERROR: Private video\n")
+
+    with pytest.raises(RuntimeError, match="Private video"):
+        youtube.download_audio(
+            "30ir9C1Im1M", __import__("pathlib").Path(str(tmp_path)), runner=runner
+        )
+
+    assert len(calls) == 1
+
+
+def test_download_exhausted_retries_reports_attempts(tmp_path, monkeypatch):
+    import subprocess
+
+    monkeypatch.setattr(youtube, "YOUTUBE_RETRY_DELAYS", (0, 0))
+
+    def runner(cmd, **kwargs):
+        raise subprocess.CalledProcessError(1, cmd, stderr="ERROR: HTTP Error 429\n")
+
+    with pytest.raises(RuntimeError, match="(?i)3 attempt.*429|429.*3 attempt"):
+        youtube.download_audio("30ir9C1Im1M", tmp_path, runner=runner)
+
+
 def test_download_audio_uses_bestaudio_single_video(tmp_path):
     calls = []
 
