@@ -7,9 +7,11 @@ and no captions. Podcast sources use this only as a last resort.
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 from typing import Callable
 
@@ -17,6 +19,24 @@ from typing import Callable
 GROQ_MODEL = "whisper-large-v3"
 WHISPER_LANGUAGE = "en"
 GROQ_MAX_UPLOAD_BYTES = 25 * 1024 * 1024
+YOUTUBE_MAX_ATTEMPTS = 3
+YOUTUBE_RETRY_DELAYS = (5.0, 20.0)
+TRANSIENT_DOWNLOAD_RE = re.compile(
+    r"403|429|50[0-3]|timed?\s?out|connection\s?(reset|refused|aborted)|"
+    r"broken\s?pipe|unable to download video data|temporary failure",
+    re.IGNORECASE,
+)
+FATAL_DOWNLOAD_RE = re.compile(
+    r"private video|video unavailable|removed|deleted|login required|"
+    r"log in|age[- ]?gated|copyright|unsupported url|invalid url|not a valid url",
+    re.IGNORECASE,
+)
+
+
+def is_transient_download_error(stderr: str) -> bool:
+    if FATAL_DOWNLOAD_RE.search(stderr):
+        return False
+    return bool(TRANSIENT_DOWNLOAD_RE.search(stderr))
 
 Runner = Callable[..., object]
 
@@ -68,29 +88,45 @@ def download_audio(
     """Download best audio-only stream. Returns the audio file path."""
     work_dir.mkdir(parents=True, exist_ok=True)
     output_template = str(work_dir / "audio.%(ext)s")
-    try:
-        runner(
-            [
-                ytdlp_binary(),
-                "-f",
-                "bestaudio[ext=m4a]/bestaudio",
-                "--no-playlist",
-                "--no-warnings",
-                "-o",
-                output_template,
-                watch_url(video_id),
-            ],
-            capture_output=True,
-            text=True,
-            timeout=600,
-            check=True,
-        )
-    except subprocess.CalledProcessError as exc:
-        detail = str(getattr(exc, "stderr", "") or "").strip().splitlines()
-        raise RuntimeError(
-            f"yt-dlp download failed for {video_id}: "
-            f"{detail[-1] if detail else exc}"
-        ) from exc
+    command = [
+        ytdlp_binary(),
+        "-f",
+        "bestaudio[ext=m4a]/bestaudio",
+        "--no-playlist",
+        "--no-warnings",
+        "-o",
+        output_template,
+        watch_url(video_id),
+    ]
+    attempts = 0
+    while True:
+        attempts += 1
+        try:
+            runner(
+                command,
+                capture_output=True,
+                text=True,
+                timeout=600,
+                check=True,
+            )
+            break
+        except subprocess.CalledProcessError as exc:
+            stderr = str(getattr(exc, "stderr", "") or "").strip()
+            detail = stderr.splitlines()
+            last_line = detail[-1] if detail else str(exc)
+            retryable = (
+                attempts < YOUTUBE_MAX_ATTEMPTS
+                and is_transient_download_error(stderr)
+            )
+            if not retryable:
+                raise RuntimeError(
+                    f"yt-dlp download failed for {video_id} "
+                    f"after {attempts} attempt(s): {last_line}"
+                ) from exc
+            delay = YOUTUBE_RETRY_DELAYS[min(attempts - 1, len(YOUTUBE_RETRY_DELAYS) - 1)]
+            print(f"     Warning: download attempt {attempts} failed ({last_line}); "
+                  f"retrying in {delay}s")
+            time.sleep(delay)
     candidates = sorted(work_dir.glob("audio.*"))
     if not candidates:
         raise RuntimeError(f"yt-dlp produced no audio file for {video_id}")
