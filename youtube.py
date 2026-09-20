@@ -41,6 +41,61 @@ def is_transient_download_error(stderr: str) -> bool:
 Runner = Callable[..., object]
 
 
+def ffmpeg_binary() -> str:
+    """Prefer the static ffmpeg bundled with imageio-ffmpeg (pip, no sudo)."""
+    try:
+        import imageio_ffmpeg
+
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except ImportError:
+        return "ffmpeg"
+
+
+def compress_audio(audio_path: Path, runner: Runner = subprocess.run) -> Path:
+    """Transcode speech to 16kHz mono 48k mp3 (~10x smaller, fine for Whisper)."""
+    compressed = audio_path.parent / "audio-small.mp3"
+    try:
+        runner(
+            [
+                ffmpeg_binary(),
+                "-y",
+                "-i",
+                str(audio_path),
+                "-vn",
+                "-ar",
+                "16000",
+                "-ac",
+                "1",
+                "-b:a",
+                "48k",
+                str(compressed),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=600,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise RuntimeError(
+            f"Audio compression needs ffmpeg: {exc}. "
+            "Run: pip install imageio-ffmpeg"
+        ) from exc
+    return compressed
+
+
+def fit_groq_upload_limit(audio_path: Path, runner: Runner = subprocess.run) -> Path:
+    if audio_path.stat().st_size <= GROQ_MAX_UPLOAD_BYTES:
+        return audio_path
+    print(f"     Compressing oversized audio: {audio_path.name}")
+    compressed = compress_audio(audio_path, runner=runner)
+    if compressed.stat().st_size <= GROQ_MAX_UPLOAD_BYTES:
+        return compressed
+    raise RuntimeError(
+        f"Audio file {audio_path} still exceeds Groq upload limit after "
+        "compression; chunked transcription is not implemented yet"
+    )
+
+
 def ytdlp_binary() -> str:
     """Prefer the yt-dlp beside the running interpreter.
 
@@ -236,6 +291,10 @@ def transcribe_youtube_audio(
     if work_dir is None:
         with tempfile.TemporaryDirectory(prefix="goldman-youtube-") as temp_dir:
             audio_path = download_audio(video_id, Path(temp_dir), runner=runner)
-            return transcribe_audio_file(audio_path, api_key)
+            return transcribe_audio_file(
+                fit_groq_upload_limit(audio_path, runner=runner), api_key
+            )
     audio_path = download_audio(video_id, Path(work_dir), runner=runner)
-    return transcribe_audio_file(audio_path, api_key)
+    return transcribe_audio_file(
+        fit_groq_upload_limit(audio_path, runner=runner), api_key
+    )

@@ -29,7 +29,8 @@ The collector uses this order:
 
 Views From the Floor videos publish no transcript, so they start at step 3.
 The videos have no captions. `yt-dlp` downloads best audio, Groq
-`whisper-large-v3` transcribes it in English.
+`whisper-large-v3` transcribes it in English. Audio over the 25 MB
+Groq cap is transcoded to 16 kHz mono 48k mp3 before upload.
 
 The FICC page lags behind YouTube, so discovery unions page cards with
 two series playlists (`The Breaks of the Game`, `The Macro Call`).

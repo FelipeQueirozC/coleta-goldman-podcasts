@@ -1,6 +1,7 @@
 import os
 import sys
 import types
+from pathlib import Path
 
 import pytest
 
@@ -201,6 +202,69 @@ def test_transcribe_youtube_audio_end_to_end_with_fakes(tmp_path, monkeypatch):
     )
 
     assert text == "spoken transcript text"
+
+
+def test_oversized_audio_is_compressed_before_transcription(tmp_path, monkeypatch):
+    monkeypatch.setattr(youtube, "GROQ_MAX_UPLOAD_BYTES", 10)
+    monkeypatch.setattr(youtube, "ffmpeg_binary", lambda: "/fake/ffmpeg")
+    uploaded = []
+
+    def runner(cmd, **kwargs):
+        if cmd[0] == "/fake/ffmpeg":
+            assert "-ar" in cmd and "16000" in cmd and "-ac" in cmd
+            (tmp_path / "audio-small.mp3").write_bytes(b"small")
+            return FakeCompleted()
+        (tmp_path / "audio.m4a").write_bytes(b"fake-audio-big")
+        return FakeCompleted()
+
+    class FakeTranscriptions:
+        def create(self, **kwargs):
+            uploaded.append(Path(kwargs["file"].name).name)
+            return "spoken transcript text"
+
+    fake_groq = types.ModuleType("groq")
+    fake_groq.Groq = lambda api_key: types.SimpleNamespace(
+        audio=types.SimpleNamespace(transcriptions=FakeTranscriptions())
+    )
+    monkeypatch.setitem(sys.modules, "groq", fake_groq)
+
+    text = youtube.transcribe_youtube_audio(
+        "kyx_K0s9nvE", api_key="groq-key", work_dir=tmp_path, runner=runner
+    )
+
+    assert text == "spoken transcript text"
+    assert uploaded == ["audio-small.mp3"]
+
+
+def test_compression_failure_when_still_oversized(tmp_path, monkeypatch):
+    monkeypatch.setattr(youtube, "GROQ_MAX_UPLOAD_BYTES", 10)
+    monkeypatch.setattr(youtube, "ffmpeg_binary", lambda: "/fake/ffmpeg")
+
+    def runner(cmd, **kwargs):
+        (tmp_path / "audio.m4a").write_bytes(b"fake-audio-big")
+        (tmp_path / "audio-small.mp3").write_bytes(b"still-too-big")
+        return FakeCompleted()
+
+    with pytest.raises(RuntimeError, match="still exceeds"):
+        youtube.transcribe_youtube_audio(
+            "kyx_K0s9nvE", api_key="groq-key", work_dir=tmp_path, runner=runner
+        )
+
+
+def test_missing_ffmpeg_raises_install_hint(tmp_path, monkeypatch):
+    monkeypatch.setattr(youtube, "GROQ_MAX_UPLOAD_BYTES", 10)
+    monkeypatch.setattr(youtube, "ffmpeg_binary", lambda: "/fake/ffmpeg")
+
+    def runner(cmd, **kwargs):
+        (tmp_path / "audio.m4a").write_bytes(b"fake-audio-big")
+        if cmd[0] == "/fake/ffmpeg":
+            raise FileNotFoundError("no ffmpeg")
+        return FakeCompleted()
+
+    with pytest.raises(RuntimeError, match="ffmpeg"):
+        youtube.transcribe_youtube_audio(
+            "kyx_K0s9nvE", api_key="groq-key", work_dir=tmp_path, runner=runner
+        )
 
 
 def test_transcribe_rejects_oversized_audio(tmp_path):
