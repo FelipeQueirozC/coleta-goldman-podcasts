@@ -32,6 +32,11 @@ REPAIR_MESSAGE = (
     "Your previous response was not a parseable JSON object. "
     "Return ONLY the JSON object now: no preamble, no explanation, no code fences."
 )
+MISSING_PROMPT_REPAIR_MESSAGE = (
+    "Your previous response was valid JSON but large_model_prompt was missing or empty. "
+    "Return ONLY the JSON object now with a non-empty large_model_prompt under 1,500 characters: "
+    "no preamble, no explanation, no code fences."
+)
 JSON_STRUCTURE_MARKERS = ("invalid JSON", "no JSON object")
 
 
@@ -120,13 +125,17 @@ def route_episode(
     try:
         return parse_routing_json(response)
     except Stage1Error as exc:
-        if not any(marker in str(exc) for marker in JSON_STRUCTURE_MARKERS):
+        if "missing large_model_prompt" in str(exc):
+            repair = MISSING_PROMPT_REPAIR_MESSAGE
+        elif any(marker in str(exc) for marker in JSON_STRUCTURE_MARKERS):
+            repair = REPAIR_MESSAGE
+        else:
             raise
     try:
         retry = caller(
             config,
             model=config.prompt_builder_model,
-            messages=messages + [{"role": "user", "content": REPAIR_MESSAGE}],
+            messages=messages + [{"role": "user", "content": repair}],
             json_mode=True,
             temperature=0.0,
             max_tokens=5000,
