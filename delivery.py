@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -17,6 +18,28 @@ SENDER_PREFIXES = {
     "exchanges": "gs.exchanges",
     "views_from_floor": "gs.viewsfromfloor",
 }
+
+
+TRANSIENT_ERRORS = (requests.exceptions.ConnectionError, requests.exceptions.Timeout)
+DELIVERY_MAX_ATTEMPTS = 3
+DELIVERY_BACKOFF = 2.0
+
+
+def _telegram_post(url: str, *, timeout: int, **kwargs: Any):
+    """POST to Telegram with bounded retry on transient connection errors."""
+    last_error: Exception | None = None
+    for attempt in range(DELIVERY_MAX_ATTEMPTS):
+        try:
+            return requests.post(url, timeout=timeout, **kwargs)
+        except TRANSIENT_ERRORS as exc:
+            last_error = exc
+            if attempt >= DELIVERY_MAX_ATTEMPTS - 1:
+                break
+            time.sleep(DELIVERY_BACKOFF * (2**attempt))
+    raise RuntimeError(
+        f"Telegram request failed after {DELIVERY_MAX_ATTEMPTS} attempts "
+        f"({last_error.__class__.__name__ if last_error else 'unknown'})"
+    ) from last_error
 
 
 @dataclass(frozen=True)
@@ -75,7 +98,7 @@ def _telegram_response(response: requests.Response, operation: str) -> dict[str,
 
 
 def send_telegram_message(episode, summary: str, routing, config: DeliveryConfig) -> str:
-    response = requests.post(
+    response = _telegram_post(
         f"https://api.telegram.org/bot{config.telegram_bot_token}/sendMessage",
         json={
             "chat_id": config.telegram_delivery_chat_id,
@@ -89,21 +112,22 @@ def send_telegram_message(episode, summary: str, routing, config: DeliveryConfig
 
 
 def send_telegram_document(episode, routing, config: DeliveryConfig, attachment: Path) -> str:
-    with attachment.open("rb") as handle:
-        response = requests.post(
-            f"https://api.telegram.org/bot{config.telegram_bot_token}/sendDocument",
-            data={
-                "chat_id": config.telegram_delivery_chat_id,
-                "caption": formatting.build_telegram_caption(episode, routing)[:1024],
-            },
-            files={"document": (attachment.name, handle, "text/html")},
-            timeout=180,
-        )
+    # Read bytes once so a transient retry resends the full file, not an exhausted handle.
+    content = attachment.read_bytes()
+    response = _telegram_post(
+        f"https://api.telegram.org/bot{config.telegram_bot_token}/sendDocument",
+        data={
+            "chat_id": config.telegram_delivery_chat_id,
+            "caption": formatting.build_telegram_caption(episode, routing)[:1024],
+        },
+        files={"document": (attachment.name, content, "text/html")},
+        timeout=180,
+    )
     return str(_telegram_response(response, "sendDocument")["message_id"])
 
 
 def send_error_message(config: DeliveryConfig, text: str) -> str:
-    response = requests.post(
+    response = _telegram_post(
         f"https://api.telegram.org/bot{config.telegram_bot_token}/sendMessage",
         json={
             "chat_id": config.telegram_error_chat_id,

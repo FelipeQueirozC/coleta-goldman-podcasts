@@ -81,3 +81,42 @@ def test_telegram_sends_message_and_html_document(tmp_path, monkeypatch):
     assert calls[0][0].endswith("/bottoken/sendMessage")
     assert calls[1][0].endswith("/bottoken/sendDocument")
     assert calls[1][1]["files"]["document"][2] == "text/html"
+
+
+def test_telegram_document_retries_transient_disconnect(tmp_path, monkeypatch):
+    import requests as requests_module
+
+    _, routing, _, html_attachment = objects(tmp_path)
+    from types import SimpleNamespace
+
+    episode = SimpleNamespace(
+        source_id="exchanges",
+        source_name="GS Exchanges",
+        slug="sample",
+        title="Sample Episode",
+        date_iso="2026-09-29",
+        url="https://example.com/episode",
+    )
+    attempts = []
+    sleeps = []
+
+    class Response:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"ok": True, "result": {"message_id": 7}}
+
+    def post(url, **kwargs):
+        attempts.append(url)
+        if len(attempts) == 1:
+            raise requests_module.exceptions.ConnectionError("Connection aborted.")
+        return Response()
+
+    monkeypatch.setattr(delivery.requests, "post", post)
+    monkeypatch.setattr(delivery.time, "sleep", lambda seconds: sleeps.append(seconds))
+    config = delivery.DeliveryConfig("r", "bot.qecapital.com.br", ["to"], "token", "chat", "errors")
+
+    assert delivery.send_telegram_document(episode, routing, config, html_attachment) == "7"
+    assert len(attempts) == 2
+    assert sleeps == [delivery.DELIVERY_BACKOFF]
