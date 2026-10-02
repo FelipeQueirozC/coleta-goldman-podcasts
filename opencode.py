@@ -160,28 +160,30 @@ def chat_completion(
     session_id = hashlib.sha256(
         json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
-    response_text = post_json(
-        config.base_url.rstrip("/") + "/chat/completions",
-        {
-            "Authorization": f"Bearer {config.api_key}",
-            "User-Agent": USER_AGENT,
-            "x-opencode-session": session_id,
-        },
-        payload,
-        timeout=timeout,
-    )
-    response = json.loads(response_text)
-    try:
-        choice = response["choices"][0]
-        content = choice["message"]["content"]
-    except (KeyError, IndexError, TypeError) as exc:
-        raise RuntimeError(f"Unexpected OpenCode response shape: {response_text[:1000]}") from exc
-    if choice.get("finish_reason") == "length":
-        limit = f"{max_tokens}-token" if max_tokens else "provider"
-        raise RuntimeError(f"OpenCode response reached the {limit} output limit")
-    if not isinstance(content, str) or not content.strip():
-        raise RuntimeError("OpenCode returned empty content")
-    return content.strip()
+    # A 200 with empty content is usually a transient provider hiccup, so try once more.
+    for _ in range(2):
+        response_text = post_json(
+            config.base_url.rstrip("/") + "/chat/completions",
+            {
+                "Authorization": f"Bearer {config.api_key}",
+                "User-Agent": USER_AGENT,
+                "x-opencode-session": session_id,
+            },
+            payload,
+            timeout=timeout,
+        )
+        response = json.loads(response_text)
+        try:
+            choice = response["choices"][0]
+            content = choice["message"]["content"]
+        except (KeyError, IndexError, TypeError) as exc:
+            raise RuntimeError(f"Unexpected OpenCode response shape: {response_text[:1000]}") from exc
+        if choice.get("finish_reason") == "length":
+            limit = f"{max_tokens}-token" if max_tokens else "provider"
+            raise RuntimeError(f"OpenCode response reached the {limit} output limit")
+        if isinstance(content, str) and content.strip():
+            return content.strip()
+    raise RuntimeError("OpenCode returned empty content")
 
 
 def open_request(request: urllib.request.Request, timeout: int) -> str:

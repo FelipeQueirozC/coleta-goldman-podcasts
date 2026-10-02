@@ -52,3 +52,23 @@ def test_chat_completion_sends_stable_session_header(monkeypatch):
     assert len(calls[0][1]["x-opencode-session"]) == 64
     assert calls[0][1]["x-opencode-session"] == calls[1][1]["x-opencode-session"]
     assert "max_tokens" not in calls[0][2]
+
+
+def test_chat_completion_retries_once_on_empty_content(monkeypatch):
+    calls = []
+
+    def post_json(url, headers, payload, **_kwargs):
+        calls.append(payload)
+        if len(calls) == 1:
+            return json.dumps({"choices": [{"message": {"content": "  "}}]})
+        return json.dumps({"choices": [{"message": {"content": "summary"}}]})
+
+    monkeypatch.setattr(opencode, "post_json", post_json)
+    config = opencode.OpenCodeConfig(api_key="secret")
+
+    assert opencode.chat_completion(
+        config,
+        model=config.summarizer_model,
+        messages=[{"role": "user", "content": "test"}],
+    ) == "summary"
+    assert len(calls) == 2
