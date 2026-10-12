@@ -247,11 +247,7 @@ Use these depth values:
 
 ### 7.4 Size Controls
 
-The Stage 1 JSON must remain below 2,500 tokens.
-
-`large_model_prompt` must remain below 1,500 characters.
-
-Each list must contain no more than five items.
+Keep lists focused and `large_model_prompt` concise.
 
 The generated prompt must contain only episode-specific instructions.
 

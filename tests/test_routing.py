@@ -29,7 +29,7 @@ def test_transcript_sampling_uses_head_middle_and_end():
     assert sample.count(routing.SNIPPET_SEPARATOR) == 2
 
 
-def test_wrapped_routing_json_is_parsed_and_bounded():
+def test_wrapped_routing_json_is_parsed_without_truncation():
     raw = json.dumps(
         {
             "type": "json_object",
@@ -51,7 +51,7 @@ def test_wrapped_routing_json_is_parsed_and_bounded():
 
     assert decision.episode_type == "investor_interview"
     assert decision.summary_lens == "investment_process"
-    assert len(decision.primary_topics) == 5
+    assert len(decision.primary_topics) == 6
     assert "portfolio construction" in decision.large_model_prompt
 
 
@@ -64,13 +64,12 @@ def test_routing_template_covers_trading_desk_briefs():
     assert "desk" in template.lower()
 
 
-def test_stage_one_rejects_malformed_or_oversized_prompt_json():
+def test_stage_one_rejects_malformed_json_and_accepts_long_prompts():
     with pytest.raises(routing.Stage1Error, match="invalid JSON"):
         routing.parse_routing_json('{"large_model_prompt": "prompt",}')
 
-    oversized = json.dumps({"large_model_prompt": "x" * 1501})
-    with pytest.raises(routing.Stage1Error, match="1,500"):
-        routing.parse_routing_json(oversized)
+    long_prompt = json.dumps({"large_model_prompt": "x" * 5000})
+    assert routing.parse_routing_json(long_prompt).large_model_prompt == "x" * 5000
 
 
 def valid_routing_json():

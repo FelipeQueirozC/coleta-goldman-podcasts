@@ -36,7 +36,7 @@ For thematic deep dives, focus on mechanisms, beneficiaries, losers, constraints
 For policy discussions, focus on transmission, expectations, yield curves, currencies, volatility, and scenarios.
 For trading desk briefs (Views From the Floor), focus on the desk's market call, positioning cues, asset implications, risks, and monitoring points.
 
-The complete JSON must stay below 2,500 tokens. Each list must contain at most five items. `large_model_prompt` must stay below 1,500 characters. It must contain only instructions specific to this episode. Do not repeat the stable output format or general safety rules.
+Keep lists focused. Keep `large_model_prompt` concise and specific to this episode. Do not repeat the stable output format or general safety rules.
 
 Podcast: {{$json.podcast_name}}
 Title: {{$json.title}}

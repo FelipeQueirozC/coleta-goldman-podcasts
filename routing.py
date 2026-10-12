@@ -20,8 +20,6 @@ HEAD_CHARS = 24_000
 MIDDLE_CHARS = 6_000
 END_CHARS = 6_000
 SNIPPET_SEPARATOR = "\n\n[...transcript continues...]\n\n"
-MAX_LARGE_PROMPT_CHARS = 1_500
-MAX_LIST_ITEMS = 5
 
 
 class Stage1Error(RuntimeError):
@@ -34,7 +32,7 @@ REPAIR_MESSAGE = (
 )
 MISSING_PROMPT_REPAIR_MESSAGE = (
     "Your previous response was valid JSON but large_model_prompt was missing or empty. "
-    "Return ONLY the JSON object now with a non-empty large_model_prompt under 1,500 characters: "
+    "Return ONLY the JSON object now with a non-empty large_model_prompt: "
     "no preamble, no explanation, no code fences."
 )
 JSON_STRUCTURE_MARKERS = ("invalid JSON", "no JSON object")
@@ -175,14 +173,11 @@ def parse_routing_json(raw_response: str) -> RoutingDecision:
     prompt = str(data.get("large_model_prompt", "")).strip()
     if not prompt:
         raise Stage1Error("Stage 1 response is missing large_model_prompt")
-    if len(prompt) > MAX_LARGE_PROMPT_CHARS:
-        raise Stage1Error("Stage 1 large_model_prompt exceeds 1,500 characters")
-
     def items(name: str) -> tuple[str, ...]:
         value = data.get(name, [])
         if not isinstance(value, list):
             return ()
-        return tuple(str(item).strip() for item in value if str(item).strip())[:MAX_LIST_ITEMS]
+        return tuple(str(item).strip() for item in value if str(item).strip())
 
     try:
         confidence = max(0.0, min(1.0, float(data.get("confidence", 0.5))))
